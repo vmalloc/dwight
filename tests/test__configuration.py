@@ -1,6 +1,8 @@
 from .test_utils import EnvironmentTestCase
 from dwight_chroot.exceptions import (
     CannotLoadConfiguration,
+    InvalidConfiguration,
+    UnknownConfigurationOptions,
     )
 
 class ConfigurationLoadingTest(EnvironmentTestCase):
@@ -12,4 +14,15 @@ class ConfigurationLoadingTest(EnvironmentTestCase):
         ]:
             with self.assertRaises(CannotLoadConfiguration):
                 self.environment.load_configuration_string(bad_source_string)
+    def test__base_image_required(self):
+        with self.assertRaisesRegexp(InvalidConfiguration, "ROOT_IMAGE is missing"):
+            self.environment.load_configuration_string("")
+    def test__configuration_defaults(self):
+        self.environment.load_configuration_string('ROOT_IMAGE="a"')
+        self.assertEquals(self.environment.extras, [])
+        self.assertEquals(self.environment.environ, {})
+        self.assertEquals(self.environment.bind_mounts, {})
+    def test__unknown_configuration(self):
+        with self.assertRaises(UnknownConfigurationOptions):
+            self.environment.load_configuration_string("ROOT_IMAGE='a'\nA=2")
     

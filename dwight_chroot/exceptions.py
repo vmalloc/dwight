@@ -6,3 +6,10 @@ class ConfigurationException(DwightException):
 
 class CannotLoadConfiguration(ConfigurationException):
     pass
+
+class InvalidConfiguration(ConfigurationException):
+    pass
+
+class UnknownConfigurationOptions(ConfigurationException):
+    pass
+

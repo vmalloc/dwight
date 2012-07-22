@@ -1,7 +1,5 @@
-!# /bin/sh
-
 sudo apt-get install -y python-setuptools build-essential python-dev
-sudo pip install nose
+sudo easy_install nose ipdb ipdbplugin ipython
 pushd ~vagrant/src
 sudo python setup.py develop
 popd

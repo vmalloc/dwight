@@ -45,8 +45,8 @@ class Environment(object):
         return [key for key in configuration_dict if key.isupper()]
     ############################################################################
     def run_shell(self):
-        self._run_command_in_chroot(get_user_shell())
-    def _run_command_in_chroot(self, cmd):
+        self.run_command_in_chroot(get_user_shell())
+    def run_command_in_chroot(self, cmd):
         if os.getuid() != 0:
             raise NotRootException("Dwight must be run as root")
         self._unshare_mount_points()

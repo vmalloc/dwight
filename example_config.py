@@ -1,9 +1,9 @@
-ROOT_IMAGE = "ssh://fileserver/images/root-ubuntu-12.04.squashfs"
+ROOT_IMAGE = "/dwight-images/precise64.squashfs"
 
-EXTRAS = [
-   Include(source="git://....../...", dest="/blap/bloop", commit="..."),
-   Include(source="blapblapblap.squashfs", dest="/bloop/bloop"),
-   ]
+#EXTRAS = [
+#   Include(source="git://....../...", dest="/blap/bloop", commit="..."),
+#   Include(source="blapblapblap.squashfs", dest="/bloop/bloop"),
+#   ]
 
 
 ENVIRON = {

@@ -1,6 +1,12 @@
 class DwightException(Exception):
     pass
 
+class UsageException(DwightException):
+    pass
+
+class NotRootException(UsageException):
+    pass
+
 class ConfigurationException(DwightException):
     pass
 

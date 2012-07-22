@@ -4,11 +4,12 @@ import argparse
 import logging
 import sys
 from ..environment import Environment
+from ..exceptions import UsageException
 
 #################################### Actions ###################################
 
-def _sync_environment(env, args):
-    env.sync()
+def _run_shell(env, args):
+    env.run_shell()
 
 ################################## Boilerplate #################################
 
@@ -18,13 +19,17 @@ parser.add_argument("-v", action="append_const", const=1, dest="verbosity", defa
                     help="Be more verbose. Can be specified multiple times to increase verbosity further")
 subparsers = parser.add_subparsers(help="Action to be taken")
 
-sync_command_parser = subparsers.add_parser("sync", help="Synchronize environment")
-sync_command_parser.set_defaults(action=_sync_environment)
+shell_command_parser = subparsers.add_parser("shell", help="Run a shell inside the chrooted environment")
+shell_command_parser.set_defaults(action=_run_shell)
 
 def main(args):
     env = Environment()
     env.load_configuration_file(args.config_file)
-    return args.action(env, args)
+    try:
+        return args.action(env, args)
+    except UsageException as e:
+        print(str(e), file=sys.stderr)
+        return -1
 
 def _configure_logging(args):
     verbosity_level = len(args.verbosity)

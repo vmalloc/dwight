@@ -1,3 +1,4 @@
+import logging
 import os
 import string
 import subprocess
@@ -11,7 +12,9 @@ from .exceptions import (
     UnknownConfigurationOptions,
     )
 from .platform_utils import get_user_shell
-    
+
+_logger = logging.getLogger(__name__)
+
 class Environment(object):
     def __init__(self):
         super(Environment, self).__init__()
@@ -51,13 +54,24 @@ class Environment(object):
             raise NotRootException("Dwight must be run as root")
         self._unshare_mount_points()
         path = self._mount_base_image()
+        self._mount_bind_mounts(path)
         self._execute_command("chroot {0} {1}".format(path, cmd))
     def _unshare_mount_points(self):
+        _logger.debug("calling unshare()")
         unshare.unshare(unshare.CLONE_NEWNS)
     def _mount_base_image(self):
         path = mkdtemp()
+        _logger.debug("Mounting base image %r in %r", self.base_image, path)
         self._execute_command_assert_success("mount -t squashfs -o loop {0} {1}".format(self.base_image, path))
         return path
+    def _mount_bind_mounts(self, base_path):
+        for mount_point, real_path in self.bind_mounts.iteritems():
+            real_path = os.path.abspath(real_path)
+            if os.path.isabs(mount_point):
+                mount_point = os.path.relpath(mount_point, '/')
+            mount_point = os.path.join(base_path, mount_point)
+            _logger.debug("Mounting (binding) %r to %r", real_path, mount_point)
+            self._execute_command_assert_success("mount --bind {0} {1}".format(real_path, mount_point))
     def _execute_command_assert_success(self, cmd, **kw):
         returned = self._execute_command(cmd, **kw)
         if returned != 0:

@@ -12,5 +12,5 @@ ENVIRON = {
     }
 
 BIND_MOUNTS = {
-    "/home": "/home/real/home"
+    "/home": "/home/vagrant"
 }

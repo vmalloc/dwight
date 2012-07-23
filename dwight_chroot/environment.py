@@ -1,10 +1,15 @@
 import logging
 import os
+import platform
 import string
 import subprocess
 from tempfile import mkdtemp
 
-import unshare
+if platform.platform().lower() == "linux":
+    import unshare
+else:
+    # for testing purposes on systems which are not Linux...
+    unshare = None
 from .exceptions import (
     CannotLoadConfiguration,
     InvalidConfiguration,
@@ -60,6 +65,8 @@ class Environment(object):
             path=path,
             cmd=cmd))
     def _unshare_mount_points(self):
+        if unshare is None:
+            raise PlatformNotSupported("{0} is not supported".format(platform.platform()))
         _logger.debug("calling unshare()")
         unshare.unshare(unshare.CLONE_NEWNS)
     def _mount_base_image(self):

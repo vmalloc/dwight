@@ -1,9 +1,14 @@
 import os
 import itertools
+import platform
 from setuptools import setup, find_packages
 
 with open(os.path.join(os.path.dirname(__file__), "dwight_chroot", "__version__.py")) as version_file:
     exec(version_file.read())
+
+_INSTALL_REQUIRES = []
+if platform.platform().lower() == "linux":
+    _INSTALL_REQUIRES.append("python-unshare")
     
 setup(name="dwight-chroot",
       classifiers = [
@@ -15,9 +20,7 @@ setup(name="dwight-chroot",
       author_email="vmalloc@gmail.com",
       version=__version__,
       packages=find_packages(exclude=["tests"]),
-      install_requires=[
-          "python-unshare",
-      ],
+      install_requires=_INSTALL_REQUIRES,
       scripts=[],
       namespace_packages=[],
       entry_points = dict(

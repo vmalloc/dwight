@@ -55,7 +55,10 @@ class Environment(object):
         self._unshare_mount_points()
         path = self._mount_base_image()
         self._mount_bind_mounts(path)
-        self._execute_command("/usr/sbin/chroot {0} {1}".format(path, cmd), env=self.environ)
+        self._execute_command("env {env} /usr/sbin/chroot {path} {cmd}".format(
+            env=" ".join('{0}="{1}"'.format(key, value) for key, value in self.environ.iteritems()),
+            path=path,
+            cmd=cmd))
     def _unshare_mount_points(self):
         _logger.debug("calling unshare()")
         unshare.unshare(unshare.CLONE_NEWNS)

@@ -16,6 +16,7 @@ sudo sv restart git-daemon
 
 # setup web server
 sudo apt-get -y install nginx
+sudo service nginx start
 
 # setup base mount (published via web)
 mkdir -p /tmp/base_image

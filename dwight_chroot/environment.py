@@ -11,6 +11,7 @@ else:
     # for testing purposes on systems which are not Linux...
     unshare = None
 from .cache import Cache
+from .include import Include
 from .exceptions import (
     CannotLoadConfiguration,
     CommandFailed,
@@ -38,7 +39,7 @@ class Environment(object):
     def load_configuration_string(self, s):
         d = {}
         try:
-            exec(s, {}, d)
+            exec(s, {"Include" : Include}, d)
         except Exception as e:
             raise CannotLoadConfiguration("Cannot load configuration ({0})".format(e))
         self.reset_configuration()
@@ -60,6 +61,7 @@ class Environment(object):
             raise NotRootException("Dwight must be run as root")
         self._unshare_mount_points()
         path = self._mount_base_image()
+        self._mount_includes(path)
         p = self._execute_command("env {env} /usr/sbin/chroot {path} {cmd}".format(
             env=" ".join('{0}="{1}"'.format(key, value) for key, value in self.environ.iteritems()),
             path=path,
@@ -76,6 +78,18 @@ class Environment(object):
         base_image_path = self.base_image.get_path(self)
         self._execute_command_assert_success("mount -n -t squashfs -o loop {0} {1}".format(base_image_path, path))
         return path
+    def _mount_includes(self, base_path):
+        for mount_point, include in self.includes.iteritems():
+            _logger.debug("Fetching include %s...", include)
+            path = include.to_resource().get_path(self)
+            self._mount_path(path, base_path, mount_point)
+    def _mount_path(self, path, base_path, mount_point):
+        path = os.path.abspath(path)
+        if os.path.isabs(mount_point):
+            mount_point = os.path.relpath(mount_point, '/')
+        mount_point = os.path.join(base_path, mount_point)
+        _logger.debug("Mounting (binding) %r to %s", path, mount_point)
+        self._execute_command_assert_success("mount -n --bind {0} {1}".format(path, mount_point))
     def _execute_command_assert_success(self, cmd, **kw):
         returned = self._execute_command(cmd, **kw)
         if returned.returncode != 0:

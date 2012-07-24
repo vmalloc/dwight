@@ -58,11 +58,13 @@ You can control the environment variables set up by dwight using the `ENVIRON` v
  }
 
 
-For Developers
---------------
+Known Issues
+------------
+
+* Currently including a single git/hg repository multiple times with different commits/branches will cause separate copies of the repository in the cache
 
 Extending, Modifying and Testing the Code
-=========================================
+-----------------------------------------
 
 The tests included in dwight are intended to be run in a dedicated environment set up by [vagrant](http://vagrantup.com). To get started, install `vagrant`, and then run `vagrant up` from the project directory to start the environment.
 
@@ -72,6 +74,6 @@ To run the tests, ssh into the client vm and run via nosetests like so:
  vagrant@client:~$ sudo nosetests -w src/tests
 
 LICENSE
-=======
+-------
 
 Dwight is distributed under the BSD 3-clause license. (See `LICENSE`)

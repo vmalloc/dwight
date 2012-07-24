@@ -1,7 +1,7 @@
 class Resource(object):
     @classmethod
     def get_resource_type_from_string(cls, s):
-        if s.startswith("git://"):
+        if s.startswith("git://") or s.startswith("ssh+git://"):
             return GitResource
         if s.startswith("http://") or s.startswith("https://"):
             return HTTPResource

@@ -6,6 +6,7 @@ class ResourceTypeDetectionTest(TestCase):
         self.assertDetectedAs("/a/b/c", resources.LocalResource)
     def test__git_resource(self):
         self.assertDetectedAs("git://git_server/repo", resources.GitResource)
+        self.assertDetectedAs("ssh+git://git_server/repo", resources.GitResource)
     def test__web_resource(self):
         self.assertDetectedAs("http://server/file.tar.gz", resources.HTTPResource)
         self.assertDetectedAs("https://secure_server/file.tar.gz", resources.HTTPResource)

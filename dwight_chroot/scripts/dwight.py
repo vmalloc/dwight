@@ -12,7 +12,7 @@ def _run_shell(env, args):
     env.run_shell()
 
 def _run_cmd(env, args):
-    env.run_command_in_chroot(args.cmd)
+    return env.run_command_in_chroot(args.cmd).returncode
     
 ################################## Boilerplate #################################
 
@@ -28,7 +28,6 @@ shell_command_parser.set_defaults(action=_run_shell)
 cmd_command_parser = subparsers.add_parser("cmd", help="Run a command inside the chrooted environment")
 cmd_command_parser.set_defaults(action=_run_cmd)
 cmd_command_parser.add_argument("cmd")
-
 
 def main(args):
     env = Environment()

@@ -21,8 +21,9 @@ sudo service nginx start
 # setup base mount (published via web)
 mkdir -p /tmp/base_image
 sudo debootstrap --variant=buildd --arch amd64 precise /tmp/base_image http://archive.ubuntu.com/ubuntu/
+sodo touch /tmp/base_image/dwight_base_image_file
 sudo mkdir -p /tmp/base_image/mounts/{fetched_from_git,fetched_from_ssh,fetched_from_local_path}
-mksquashfs /tmp/base_image /usr/share/nginx/www/base_image.squashfs
+mksquashfs /tmp/base_image /usr/share/nginx/www/ubuntu_precise64.squashfs
 
 # setup git repository 
 pushd /var/cache/git

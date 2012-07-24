@@ -9,7 +9,7 @@ def get_user_shell():
 def execute_command_assert_success(cmd, **kw):
     returned = execute_command(cmd, **kw)
     if returned.returncode != 0:
-        raise CommandFailed("Command {0!r} failed with exit code {1}".format(cmd, returned))
+        raise CommandFailed("Command {0!r} failed with exit code {1}".format(cmd, returned.returncode))
     return returned
 
 def execute_command(cmd, **kw):

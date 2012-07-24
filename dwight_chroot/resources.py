@@ -1,3 +1,8 @@
+import os
+import shutil
+import urllib2
+import urlparse
+
 class Resource(object):
     @classmethod
     def get_resource_type_from_string(cls, s):
@@ -53,3 +58,19 @@ class HTTPResource(CacheableResource):
     def __init__(self, url):
         super(HTTPResource, self).__init__()
         self.url = url
+        self._filename = self._deduce_output_file_name(url)
+    def get_cache_key(self):
+        return self.url
+    def refresh(self, path):
+        pass
+    def fetch(self, path):
+        output_path = os.path.join(path, self._filename)
+        with open(output_path, "w") as output_file:
+            shutil.copyfileobj(urllib2.urlopen(self.url), output_file)
+        return output_path
+    def _deduce_output_file_name(self, url):
+        _, _, path, _, _ = urlparse.urlsplit(url)
+        name = path.split("/")[-1]
+        if not name:
+            name = "file"
+        return name

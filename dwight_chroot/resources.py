@@ -6,6 +6,9 @@ class Resource(object):
         if s.startswith("http://") or s.startswith("https://"):
             return HTTPResource
         return LocalResource
+    @classmethod
+    def from_string(cls, s):
+        return cls.get_resource_type_from_string(s)(s)
     def get_path(self, env):
         raise NotImplementedError() # pragma: no cover
 

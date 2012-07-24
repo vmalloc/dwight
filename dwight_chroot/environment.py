@@ -19,6 +19,7 @@ from .exceptions import (
     UnknownConfigurationOptions,
     )
 from .platform_utils import get_user_shell
+from .resources import Resource
 
 _logger = logging.getLogger(__name__)
 
@@ -43,8 +44,7 @@ class Environment(object):
         self.reset_configuration()
         if "ROOT_IMAGE" not in d:
             raise InvalidConfiguration("ROOT_IMAGE is missing in configuration")
-        self.base_image = d.pop("ROOT_IMAGE")
-        
+        self.base_image = Resource.from_string(d.pop("ROOT_IMAGE"))
         self.includes = d.pop("INCLUDES", [])
         self.environ = d.pop("ENVIRON", {})
         unknown_parameters = self._get_unknown_parameters(d)
@@ -73,7 +73,8 @@ class Environment(object):
     def _mount_base_image(self):
         path = mkdtemp()
         _logger.debug("Mounting base image %r in %r", self.base_image, path)
-        self._execute_command_assert_success("mount -n -t squashfs -o loop {0} {1}".format(self.base_image, path))
+        base_image_path = self.base_image.get_path(self)
+        self._execute_command_assert_success("mount -n -t squashfs -o loop {0} {1}".format(base_image_path, path))
         return path
     def _execute_command_assert_success(self, cmd, **kw):
         returned = self._execute_command(cmd, **kw)

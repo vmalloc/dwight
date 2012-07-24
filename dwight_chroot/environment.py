@@ -10,6 +10,7 @@ if platform.system().lower() == "linux":
 else:
     # for testing purposes on systems which are not Linux...
     unshare = None
+from .cache import Cache
 from .exceptions import (
     CannotLoadConfiguration,
     CommandFailed,
@@ -25,6 +26,7 @@ class Environment(object):
     def __init__(self):
         super(Environment, self).__init__()
         self.reset_configuration()
+        self.cache = Cache(os.path.expanduser("~/.dwight-cache"))
     def reset_configuration(self):
         self.base_image = None
         self.includes = []

@@ -1,6 +1,9 @@
 class DwightException(Exception):
     pass
 
+class CommandFailed(DwightException):
+    pass
+
 class UsageException(DwightException):
     pass
 

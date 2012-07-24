@@ -12,6 +12,7 @@ else:
     unshare = None
 from .exceptions import (
     CannotLoadConfiguration,
+    CommandFailed,
     InvalidConfiguration,
     NotRootException,
     UnknownConfigurationOptions,

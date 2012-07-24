@@ -60,10 +60,11 @@ class Environment(object):
         self._unshare_mount_points()
         path = self._mount_base_image()
         self._mount_bind_mounts(path)
-        self._execute_command("env {env} /usr/sbin/chroot {path} {cmd}".format(
+        p = self._execute_command("env {env} /usr/sbin/chroot {path} {cmd}".format(
             env=" ".join('{0}="{1}"'.format(key, value) for key, value in self.environ.iteritems()),
             path=path,
             cmd=cmd))
+        return p
     def _unshare_mount_points(self):
         if unshare is None:
             raise PlatformNotSupported("{0} is not supported".format(platform.system()))
@@ -84,10 +85,13 @@ class Environment(object):
             self._execute_command_assert_success("mount -n --bind {0} {1}".format(real_path, mount_point))
     def _execute_command_assert_success(self, cmd, **kw):
         returned = self._execute_command(cmd, **kw)
-        if returned != 0:
+        if returned.returncode != 0:
             raise CommandFailed("Command {0!r} failed with exit code {1}".format(cmd, returned))
+        return returned
     def _execute_command(self, cmd, **kw):
-        return subprocess.call(cmd, shell=True, **kw)
+        returned = subprocess.Popen(cmd, shell=True, **kw)
+        returned.wait()
+        return returned
 
 
                 

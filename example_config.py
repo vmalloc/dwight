@@ -1,16 +1,5 @@
-ROOT_IMAGE = "/dwight-images/precise64.squashfs"
-
-#EXTRAS = [
-#   Include(source="git://....../...", dest="/blap/bloop", commit="..."),
-#   Include(source="blapblapblap.squashfs", dest="/bloop/bloop"),
-#   ]
-
+ROOT_IMAGE = "http://server/ubuntu_precise64.squashfs"
 
 ENVIRON = {
-    'PATH' : '$PATH:build/python/verycoolpythonlib/bin:/opt/toolchain/bin',
-    'PYTHONPATH' : '$PYTHONPATH:build/python/verycoolpythonlib'
+    "PATH" : "$PATH:some_path_here"
     }
-
-BIND_MOUNTS = {
-    "/home": "/home/vagrant"
-}

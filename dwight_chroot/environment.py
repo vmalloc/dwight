@@ -26,9 +26,8 @@ class Environment(object):
         self.reset_configuration()
     def reset_configuration(self):
         self.base_image = None
-        self.extras = []
+        self.includes = []
         self.environ = {}
-        self.bind_mounts = {}
     def load_configuration_file(self, filename):
         with open(filename, "r") as configuration_file:
             self.load_configuration_string(configuration_file.read())
@@ -43,9 +42,8 @@ class Environment(object):
             raise InvalidConfiguration("ROOT_IMAGE is missing in configuration")
         self.base_image = d.pop("ROOT_IMAGE")
         
-        self.extras = d.pop("EXTRAS", [])
+        self.includes = d.pop("INCLUDES", [])
         self.environ = d.pop("ENVIRON", {})
-        self.bind_mounts = d.pop("BIND_MOUNTS", {})
         unknown_parameters = self._get_unknown_parameters(d)
         if unknown_parameters:
             raise UnknownConfigurationOptions("Unknown options: {0}".format(", ".join(d)))
@@ -59,7 +57,6 @@ class Environment(object):
             raise NotRootException("Dwight must be run as root")
         self._unshare_mount_points()
         path = self._mount_base_image()
-        self._mount_bind_mounts(path)
         p = self._execute_command("env {env} /usr/sbin/chroot {path} {cmd}".format(
             env=" ".join('{0}="{1}"'.format(key, value) for key, value in self.environ.iteritems()),
             path=path,
@@ -75,14 +72,6 @@ class Environment(object):
         _logger.debug("Mounting base image %r in %r", self.base_image, path)
         self._execute_command_assert_success("mount -n -t squashfs -o loop {0} {1}".format(self.base_image, path))
         return path
-    def _mount_bind_mounts(self, base_path):
-        for mount_point, real_path in self.bind_mounts.iteritems():
-            real_path = os.path.abspath(real_path)
-            if os.path.isabs(mount_point):
-                mount_point = os.path.relpath(mount_point, '/')
-            mount_point = os.path.join(base_path, mount_point)
-            _logger.debug("Mounting (binding) %r to %r", real_path, mount_point)
-            self._execute_command_assert_success("mount -n --bind {0} {1}".format(real_path, mount_point))
     def _execute_command_assert_success(self, cmd, **kw):
         returned = self._execute_command(cmd, **kw)
         if returned.returncode != 0:

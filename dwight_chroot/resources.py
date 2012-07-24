@@ -6,20 +6,33 @@ class Resource(object):
         if s.startswith("http://") or s.startswith("https://"):
             return HTTPResource
         return LocalResource
+    def get_path(self, env):
+        raise NotImplementedError() # pragma: no cover
 
 class LocalResource(Resource):
     def __init__(self, path):
         super(LocalResource, self).__init__()
         self._path = path
-    def get_path(self):
+    def get_path(self, env):
         return self._path
 
 class FetchedResource(Resource):
-    def get(self, path):
-        raise NotImplementedError() # pragma: no cover
+    pass
 
 class CacheableResource(FetchedResource):
+    def get_path(self, env):
+        key = self.get_cache_key()
+        path = env.cache.get_path(key)
+        if path is None:
+            path = env.cache.create_new_path()
+            self.fetch(path)
+            env.cache.register_new_path(path, key)
+        else:
+            self.refresh(path)
+        return path
     def get_cache_key(self):
+        raise NotImplementedError() # pragma: no cover
+    def fetch(self, path):
         raise NotImplementedError() # pragma: no cover
     def refresh(self, path):
         raise NotImplementedError() # pragma: no cover

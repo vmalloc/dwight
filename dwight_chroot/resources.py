@@ -28,7 +28,9 @@ class CacheableResource(FetchedResource):
         path = env.cache.get_path(key)
         if path is None:
             path = env.cache.create_new_path()
-            self.fetch(path)
+            fetch_result = self.fetch(path)
+            if fetch_result:
+                path = fetch_result
             env.cache.register_new_path(path, key)
         else:
             self.refresh(path)

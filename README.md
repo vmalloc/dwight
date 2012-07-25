@@ -64,6 +64,10 @@ To run the tests, ssh into the client vm and run via nosetests like so:
       $ vagrant ssh client
       vagrant@client:~$ sudo nosetests -w src/tests
 
+# Acknowledgements
+
+Special credit and thanks go to **Yotam Rubin**, who came up with the idea and drove this project forward.
+
 # LICENSE
 
 Dwight is distributed under the BSD 3-clause license. (See `LICENSE`)

@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 with open(os.path.join(os.path.dirname(__file__), "dwight_chroot", "__version__.py")) as version_file:
     exec(version_file.read())
 
-_INSTALL_REQUIRES = []
+_INSTALL_REQUIRES = ["six"]
 if platform.system().lower() == "linux":
     _INSTALL_REQUIRES.append("python-unshare")
     

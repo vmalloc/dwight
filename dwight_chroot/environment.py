@@ -10,6 +10,9 @@ if platform.system().lower() == "linux":
 else:
     # for testing purposes on systems which are not Linux...
     unshare = None
+
+from six import iteritems
+
 from .cache import Cache
 from .include import Include
 from .exceptions import (
@@ -66,7 +69,7 @@ class Environment(object):
         path = self._mount_base_image()
         self._mount_includes(path)
         p = execute_command("env {env} /usr/sbin/chroot {path} {cmd}".format(
-            env=" ".join('{0}="{1}"'.format(key, value) for key, value in self.environ.iteritems()),
+            env=" ".join('{0}="{1}"'.format(key, value) for key, value in iteritems(self.environ)),
             path=path,
             cmd=cmd))
         return p
@@ -82,7 +85,7 @@ class Environment(object):
         self._mount_regular_file(base_image_path, path)
         return path
     def _mount_includes(self, base_path):
-        for mount_point, include in self.includes.iteritems():
+        for mount_point, include in iteritems(self.includes):
             _logger.debug("Fetching include %s...", include)
             path = include.to_resource().get_path(self)
             self._mount_path(path, base_path, mount_point)

@@ -1,9 +1,14 @@
 import functools
 import os
 import shutil
-import urllib2
-import urlparse
+import six
 
+if six.PY3:
+    import urllib as urllib2
+    from urllib.parse import urlsplit
+else:
+    import urllib2
+    from urlparse import urlsplit
 from .exceptions import UsageException
 from .platform_utils import execute_command_assert_success
 
@@ -96,7 +101,7 @@ class HTTPResource(CacheableResource):
             shutil.copyfileobj(urllib2.urlopen(self.url), output_file)
         return output_path
     def _deduce_output_file_name(self, url):
-        _, _, path, _, _ = urlparse.urlsplit(url)
+        _, _, path, _, _ = urlsplit(url)
         name = path.split("/")[-1]
         if not name:
             name = "file"

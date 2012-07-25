@@ -1,5 +1,5 @@
 echo "192.168.1.10 client" >> /etc/hosts
-sudo apt-get install -y python-setuptools build-essential python-dev debootstrap squashfs-tools libnss-mdns
+sudo apt-get install -y python-setuptools build-essential python-dev debootstrap squashfs-tools libnss-mdns tmux
 
 # setup git server
 sudo apt-get -y install git-daemon-run
@@ -14,6 +14,21 @@ exec chpst -ugitdaemon \
 EOF
 sudo sv restart git-daemon
 
+# setup mercurial server
+sudo apt-get -y install mercurial
+
+echo <<EOF > $HOME/.hgrc
+[ui]
+username = John Doe <john@example.com>
+EOF
+
+hg init $HOME/hgrepo
+pushd $HOME/hgrepo
+touch fetched_from_hg_file
+hg commit -m some_commit
+hg serve -d --prefix repository
+popd
+
 # setup web server
 sudo apt-get -y install nginx
 sudo service nginx start
@@ -22,7 +37,7 @@ sudo service nginx start
 mkdir -p /tmp/base_image
 sudo debootstrap --variant=buildd --arch amd64 precise /tmp/base_image http://archive.ubuntu.com/ubuntu/
 sudo touch /tmp/base_image/dwight_base_image_file
-sudo mkdir -p /tmp/base_image/mounts/{fetched_from_git,fetched_from_http,fetched_from_ssh,fetched_from_local_path}
+sudo mkdir -p /tmp/base_image/mounts/{fetched_from_git,fetched_from_hg,fetched_from_http,fetched_from_ssh,fetched_from_local_path}
 mksquashfs /tmp/base_image /usr/share/nginx/www/ubuntu_precise64.squashfs
 
 # setup external squashfs (to be exported over http)

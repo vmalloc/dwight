@@ -4,6 +4,7 @@ INCLUDES = {
     "/mounts/fetched_from_local_path" : Include("/local/path"),
     "/mounts/fetched_from_git" : Include("git://server/git/git_repository"),
     "/mounts/fetched_from_http" : Include("http://server/fetched_from_http.squashfs"),
+    "/mounts/fetched_from_hg" : Include("http+hg://server:8000/repository"),
 }
 
 ENVIRON = {

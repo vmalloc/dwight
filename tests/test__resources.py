@@ -8,6 +8,9 @@ class ResourceTypeDetectionTest(TestCase):
     def test__git_resource(self):
         self.assertDetectedAs("git://git_server/repo", resources.GitResource)
         self.assertDetectedAs("ssh+git://git_server/repo", resources.GitResource)
+    def test__hg_resource(self):
+        self.assertDetectedAs("http+hg://server/repo", resources.MercurialResource)
+        self.assertDetectedAs("https+hg://server/repo", resources.MercurialResource)
     def test__web_resource(self):
         self.assertDetectedAs("http://server/file.tar.gz", resources.HTTPResource)
         self.assertDetectedAs("https://secure_server/file.tar.gz", resources.HTTPResource)

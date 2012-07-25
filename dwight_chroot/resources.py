@@ -17,6 +17,8 @@ class Resource(object):
     def get_resource_type_from_string(cls, s):
         if s.startswith("git://") or s.startswith("ssh+git://"):
             return GitResource
+        if s.startswith("http+hg://") or s.startswith("https+hg://"):
+            return MercurialResource
         if s.startswith("http://") or s.startswith("https://"):
             return HTTPResource
         return LocalResource
@@ -56,14 +58,12 @@ class CacheableResource(FetchedResource):
     def refresh(self, path):
         raise NotImplementedError() # pragma: no cover
 
-class GitResource(CacheableResource):
+class DVCSResource(CacheableResource):
     def __init__(self, repo_url, commit=None, branch=None):
-        super(GitResource, self).__init__()
+        super(DVCSResource, self).__init__()
         self.repo_url = repo_url
         if commit is not None and branch is not None:
             raise UsageException("Cannot specify both branch and commit for git resources")
-        if commit is None and branch is None:
-            branch = "master"
         self.commit = commit
         self.branch = branch
     def get_cache_key(self):
@@ -73,18 +73,65 @@ class GitResource(CacheableResource):
     def refresh(self, path):
         self._refresh(path, initialize=False)
     def _refresh(self, path, initialize):
-        execute = functools.partial(execute_command_assert_success, cwd=path)
         if initialize:
             shutil.rmtree(path)
-            execute_command_assert_success("git clone {0} {1}".format(self.repo_url, path))
-        else:
-            execute("git fetch origin")
+            self._clone_into(path)
+            if self.commit:
+                # a commit never changes, so we only do this upon
+                # initialization
+                self._checkout_commit(path)
+            if self.branch:
+                self._checkout_branch(path)
+        elif not self.commit:
+            self._pull_changes(path)
+
+class MercurialResource(DVCSResource):
+    def __init__(self, *args, **kwargs):
+        super(MercurialResource, self).__init__(*args, **kwargs)
+        self._fix_url_scheme()
+    def _fix_url_scheme(self):
+        for prefix, fix in [
+                ("http+hg://", "http://"),
+                ("https+hg://", "https://")
+        ]:
+            if self.repo_url.startswith(prefix):
+                self.repo_url = fix + self.repo_url[len(prefix):]
+                break
+    def _clone_into(self, path):
+        cmd = "hg clone"
+        if self.commit:
+            cmd += " -r {0}".format(self.commit)
         if self.branch:
-            execute("git fetch origin && git checkout origin/{0} && git reset --hard".format(self.branch))
-        else:
-            assert self.commit
-            execute("git checkout {0} && git reset --hard".format(self.commit))
-        
+            cmd += " -b {0}".format(self.branch)
+        cmd += " {0} {1}".format(self.repo_url, path)
+        execute_command_assert_success(cmd)
+    def _checkout_branch(self, path):
+        pass
+    def _checkout_commit(self, path):
+        pass
+    def _pull_changes(self, path):
+        if not self.commit:
+            execute_command_assert_success("hg pull", cwd=path)
+
+class GitResource(DVCSResource):
+    def _clone_into(self, path):
+        execute_command_assert_success("git clone {0} {1}".format(self.repo_url, path))
+    def _checkout_branch(self, path):
+        assert self.branch
+        execute_command_assert_success(
+            "git fetch origin && git checkout -b {0} origin/{0}".format(self.branch),
+            cwd=path)
+    def _checkout_commit(self, path):
+        assert self.commit
+        execute_command_assert_success(
+            "git fetch origin && git checkout {0} && git reset --hard".format(self.commit),
+            cwd=path
+            )
+    def _pull_changes(self, path):
+        execute_command_assert_success(
+            "git pull",
+            cwd=path
+            )
 
 class HTTPResource(CacheableResource):
     def __init__(self, url):

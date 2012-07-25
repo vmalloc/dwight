@@ -8,7 +8,7 @@ Chrooted environments are constructed from a base image (currently only *squashf
 
 `dwight` can be installed via `pip`:
 
-    pip install dwight-chroot
+      pip install dwight-chroot
   
 # Usage
 
@@ -16,11 +16,11 @@ Chrooted environments are constructed from a base image (currently only *squashf
 
 To run `dwight` you'll need a configuration file. A configuration file should at least contain the location of the base image. Here is a minimal configuration file:
 
-    ROOT_IMAGE = "/path/to/image.squashfs"
+      ROOT_IMAGE = "/path/to/image.squashfs"
  
 Now just run:
 
-    dwight -c /path/to/config_file.py shell
+      dwight -c /path/to/config_file.py shell
  
 This will drop you into a shell in your chrooted environment.
 
@@ -28,9 +28,9 @@ This will drop you into a shell in your chrooted environment.
 
 To bind paths or resources to your chroot environment, use the `INCLUDES` varaible in your configuration file:
 
-    INCLUDES = {
-      "/path/in/chroot" : Include("/local/path"),
-    }
+      INCLUDES = {
+        "/path/in/chroot" : Include("/local/path"),
+      }
  
 The above example will bind-mount `/local/path` on your machine to the path `/path/in/chroot` (inside the chrooted environment).
 
@@ -46,9 +46,9 @@ Not only local directories can be `Include`ed. The following resources are suppo
 
 You can control the environment variables set up by dwight using the `ENVIRON` variable in your configuration file:
 
-    ENVIRON = {
-         "PATH" : "$PATH:another/extra/path/here"
-    }
+      ENVIRON = {
+           "PATH" : "$PATH:another/extra/path/here"
+      }
 
 
 # Known Issues
@@ -61,8 +61,8 @@ The tests included in dwight are intended to be run in a dedicated environment s
 
 To run the tests, ssh into the client vm and run via nosetests like so:
 
-    $ vagrant ssh client
-    vagrant@client:~$ sudo nosetests -w src/tests
+      $ vagrant ssh client
+      vagrant@client:~$ sudo nosetests -w src/tests
 
 # LICENSE
 

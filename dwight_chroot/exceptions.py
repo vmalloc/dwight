@@ -22,3 +22,8 @@ class InvalidConfiguration(ConfigurationException):
 class UnknownConfigurationOptions(ConfigurationException):
     pass
 
+class RuntimeDwightException(DwightException):
+    pass
+
+class CannotMountPath(RuntimeDwightException):
+    pass

@@ -22,8 +22,13 @@ sudo service nginx start
 mkdir -p /tmp/base_image
 sudo debootstrap --variant=buildd --arch amd64 precise /tmp/base_image http://archive.ubuntu.com/ubuntu/
 sudo touch /tmp/base_image/dwight_base_image_file
-sudo mkdir -p /tmp/base_image/mounts/{fetched_from_git,fetched_from_ssh,fetched_from_local_path}
+sudo mkdir -p /tmp/base_image/mounts/{fetched_from_git,fetched_from_http,fetched_from_ssh,fetched_from_local_path}
 mksquashfs /tmp/base_image /usr/share/nginx/www/ubuntu_precise64.squashfs
+
+# setup external squashfs (to be exported over http)
+mkdir /tmp/external_image
+touch /tmp/external_image/fetched_from_http_file
+mksquashfs /tmp/external_image /usr/share/nginx/www/fetched_from_http.squashfs
 
 # setup git repository
 pushd /var/cache/git

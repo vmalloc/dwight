@@ -79,7 +79,7 @@ class Environment(object):
         path = mkdtemp()
         _logger.debug("Mounting base image %r in %r", self.base_image, path)
         base_image_path = self.base_image.get_path(self)
-        execute_command_assert_success("mount -n -t squashfs -o loop {0} {1}".format(base_image_path, path))
+        self._mount_regular_file(base_image_path, path)
         return path
     def _mount_includes(self, base_path):
         for mount_point, include in self.includes.iteritems():
@@ -91,8 +91,16 @@ class Environment(object):
         if os.path.isabs(mount_point):
             mount_point = os.path.relpath(mount_point, '/')
         mount_point = os.path.join(base_path, mount_point)
+        if not os.path.exists(path):
+            raise CannotMountPath("Cannot mount {0}: does not exist".format(path))
+        if os.path.isfile(path):
+            return self._mount_regular_file(path, mount_point)
+        return self._mount_directory(path, mount_point)
+    def _mount_regular_file(self, path, mount_point):
+        _logger.debug("Mounting squashfs file %r to %s", path, mount_point)
+        execute_command_assert_success("mount -n -t squashfs -o loop {0} {1}".format(path, mount_point))
+    def _mount_directory(self, path, mount_point):
         _logger.debug("Mounting (binding) %r to %s", path, mount_point)
         execute_command_assert_success("mount -n --bind {0} {1}".format(path, mount_point))
-
 
                 

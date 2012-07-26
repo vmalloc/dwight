@@ -1,8 +1,10 @@
+import os
 from .resources import Resource
 
 class Include(object):
-    def __init__(self, source, **kwargs):
+    def __init__(self, dest, source, **kwargs):
         super(Include, self).__init__()
+        self.dest = os.path.abspath(dest)
         self.source = source
         self.kwargs = kwargs
     def to_resource(self):

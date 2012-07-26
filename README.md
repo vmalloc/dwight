@@ -28,19 +28,34 @@ This will drop you into a shell in your chrooted environment.
 
 To bind paths or resources to your chroot environment, use the `INCLUDES` varaible in your configuration file:
 
-      INCLUDES = {
-        "/path/in/chroot" : Include("/local/path"),
-      }
- 
-The above example will bind-mount `/local/path` on your machine to the path `/path/in/chroot` (inside the chrooted environment).
+      INCLUDES = [
+        Include("/path/in/chroot", "/local/path"),
+      ]
 
-## External Resources
+`INCLUDES` is a list of `Include` declarations. Each has a first argument which is the *destination* inside the chroot, and a second argument which is the resource to be `Include`ed.
 
-Not only local directories can be `Include`ed. The following resources are supported:
+Severl types of resources can be included, as describe below.
 
-* git repositories (resources starting with `git://` or `ssh+git://`)
-* squashfs images on local machine (e.g. `/tmp/image.squashfs`)
-* squashfs images on over http (e.g. `http://server/blap.squashfs`)
+### Local Paths
+
+Local paths get included as bind-mounts. If the path specified is a relative path, it is taken relative to the current working directory (useful for home dir mounting, for example)
+
+### Git/Mercurial Repositories
+
+Git and Mercurial repositories can be included. They are designated by using resource paths starting with `git://`, `ssh+git://`, `http+hg://` or `https+hg://`. They also take additional optional parameters, for example:
+
+        Include("/path", "git://server/git/repository", branch="development") # cloning a specific branch
+        Include("/path", "git://server/git/repository", commit="4ff7a0565964eb428e5b45479922f164a5ee941b") # specific commit
+
+### Squashfs Images
+
+You can include whole images saved as **squashfs** files. This can be done from a local path:
+
+        Include("/mount", "/path/to/image.squashfs")
+
+Or from http/https:
+
+        Include("/mount", "http://server/files/image.squashfs")
 
 ## Environment Variables
 
@@ -49,7 +64,6 @@ You can control the environment variables set up by dwight using the `ENVIRON` v
       ENVIRON = {
            "PATH" : "$PATH:another/extra/path/here"
       }
-
 
 # Known Issues
 

@@ -85,10 +85,10 @@ class Environment(object):
         self._mount_regular_file(base_image_path, path)
         return path
     def _mount_includes(self, base_path):
-        for mount_point, include in iteritems(self.includes):
+        for include in self.includes:
             _logger.debug("Fetching include %s...", include)
             path = include.to_resource().get_path(self)
-            self._mount_path(path, base_path, mount_point)
+            self._mount_path(path, base_path, include.dest)
     def _mount_path(self, path, base_path, mount_point):
         path = os.path.abspath(path)
         if os.path.isabs(mount_point):

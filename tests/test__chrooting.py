@@ -19,6 +19,6 @@ class ChrootingTestCase(EnvironmentTestCase):
     def assertMountSuccessful(self, name):
         self.assertChrootFileExists("/mounts/{0}/{0}_file".format(name))
     def assertChrootFileExists(self, path):
-        p = self.environment.run_command_in_chroot("test -e {}".format(path))
+        p = self.environment.run_command_in_chroot("test -e {}".format(path), cleanup_mounts=True)
         self.assertEquals(p.returncode, 0, "File {0!r} does not exist".format(path))
         

@@ -6,10 +6,10 @@ from setuptools import setup, find_packages
 with open(os.path.join(os.path.dirname(__file__), "dwight_chroot", "__version__.py")) as version_file:
     exec(version_file.read())
 
-_INSTALL_REQUIRES = ["six"]
+_INSTALL_REQUIRES = []
 if platform.system().lower() == "linux":
     _INSTALL_REQUIRES.append("python-unshare")
-    
+
 setup(name="dwight-chroot",
       classifiers = [
           "Programming Language :: Python :: 2.7",
@@ -28,5 +28,5 @@ setup(name="dwight-chroot",
               "dwight  = dwight_chroot.scripts.dwight:main_entry_point",
               ]
           ),
-          
+
       )

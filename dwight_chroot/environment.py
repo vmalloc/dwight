@@ -11,8 +11,6 @@ else:
     # for testing purposes on systems which are not Linux...
     unshare = None
 
-from six import iteritems
-
 from .cache import Cache
 from .include import Include
 from .exceptions import (
@@ -26,6 +24,7 @@ from .platform_utils import (
     execute_command_assert_success,
     get_user_shell,
     )
+from .python_compat import iteritems
 from .resources import Resource
 
 _logger = logging.getLogger(__name__)

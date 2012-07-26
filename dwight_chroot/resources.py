@@ -1,14 +1,12 @@
 import functools
 import os
 import shutil
-import six
 
-if six.PY3:
-    import urllib as urllib2
-    from urllib.parse import urlsplit
-else:
-    import urllib2
-    from urlparse import urlsplit
+from .python_compat import (
+    urllib2,
+    urlsplit,
+    )
+
 from .exceptions import UsageException
 from .platform_utils import execute_command_assert_success
 

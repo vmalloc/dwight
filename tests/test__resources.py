@@ -1,4 +1,6 @@
 from .test_utils import TestCase
+import functools
+import itertools
 from dwight_chroot import resources
 from dwight_chroot.exceptions import UsageException
 
@@ -17,7 +19,14 @@ class ResourceTypeDetectionTest(TestCase):
     def assertDetectedAs(self, string, resource_type):
         self.assertIs(resource_type, resources.Resource.get_resource_type_from_string(string))
 
-class GitResourceTest(TestCase):
-    def test__cannot_specify_commit_and_branch_together(self):
-        with self.assertRaises(UsageException):
-            resources.GitResource("repo", commit="a", branch="b")
+class DVCSResourceTest(TestCase):
+    def test__cannot_specify_multiple_checkout_options(self):
+        for url in ("git://a/b", "http+hg://a/b"):
+            resource_type = resources.Resource.get_resource_type_from_string(url)
+            for branch, tag, commit in itertools.product([None, "a"], [None, "b"], [None, "c"]):
+                r = functools.partial(resource_type, url, branch=branch, tag=tag, commit=commit)
+                if len(set([branch, tag, commit]) - set([None])) <= 1:
+                    r()
+                else:
+                    with self.assertRaises(UsageException):
+                        r()

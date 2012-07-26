@@ -45,6 +45,7 @@ Local paths get included as bind-mounts. If the path specified is a relative pat
 Git and Mercurial repositories can be included. They are designated by using resource paths starting with `git://`, `ssh+git://`, `http+hg://` or `https+hg://`. They also take additional optional parameters, for example:
 
         Include("/path", "git://server/git/repository", branch="development") # cloning a specific branch
+        Include("/path", "git://server/git/repository", tag="rc1") # clone a specific tag
         Include("/path", "git://server/git/repository", commit="4ff7a0565964eb428e5b45479922f164a5ee941b") # specific commit
 
 ### Squashfs Images
@@ -67,7 +68,7 @@ You can control the environment variables set up by dwight using the `ENVIRON` v
 
 # Known Issues
 
-* Currently including a single git/hg repository multiple times with different commits/branches will cause separate copies of the repository in the cache
+* Currently including a single git/hg repository multiple times with different commits/branches/tags will cause separate copies of the repository in the cache
 
 # Extending, Modifying and Testing the Code
 

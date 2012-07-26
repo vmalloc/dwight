@@ -57,31 +57,25 @@ class CacheableResource(FetchedResource):
         raise NotImplementedError() # pragma: no cover
 
 class DVCSResource(CacheableResource):
-    def __init__(self, repo_url, commit=None, branch=None):
+    def __init__(self, repo_url, commit=None, branch=None, tag=None):
         super(DVCSResource, self).__init__()
         self.repo_url = repo_url
-        if commit is not None and branch is not None:
-            raise UsageException("Cannot specify both branch and commit for git resources")
         self.commit = commit
         self.branch = branch
+        self.tag = tag
+        self._check_parameters()
+        self._needs_pull = (commit is None and tag is None)
+    def _check_parameters(self):
+        if len([x for x in (self.commit, self.branch, self.tag) if x is not None]) > 1:
+            raise UsageException("Can only specify at most one of (commit/branch/tag) for SCM resources")
     def get_cache_key(self):
-        return dict(url=self.repo_url, commit=self.commit, branch=self.branch)
+        return dict(url=self.repo_url, commit=self.commit, branch=self.branch, tag=self.tag)
     def fetch(self, path):
-        self._refresh(path, initialize=True)
+        shutil.rmtree(path)
+        self._clone(path)
     def refresh(self, path):
-        self._refresh(path, initialize=False)
-    def _refresh(self, path, initialize):
-        if initialize:
-            shutil.rmtree(path)
-            self._clone_into(path)
-            if self.commit:
-                # a commit never changes, so we only do this upon
-                # initialization
-                self._checkout_commit(path)
-            if self.branch:
-                self._checkout_branch(path)
-        elif not self.commit:
-            self._pull_changes(path)
+        if self._needs_pull:
+            self._pull(path)
 
 class MercurialResource(DVCSResource):
     def __init__(self, *args, **kwargs):
@@ -95,37 +89,31 @@ class MercurialResource(DVCSResource):
             if self.repo_url.startswith(prefix):
                 self.repo_url = fix + self.repo_url[len(prefix):]
                 break
-    def _clone_into(self, path):
+    def _clone(self, path):
         cmd = "hg clone"
-        if self.commit:
-            cmd += " -r {0}".format(self.commit)
+        if self.commit or self.tag:
+            cmd += " -r {0}".format(self.commit or self.tag)
         if self.branch:
             cmd += " -b {0}".format(self.branch)
         cmd += " {0} {1}".format(self.repo_url, path)
         execute_command_assert_success(cmd)
-    def _checkout_branch(self, path):
-        pass
-    def _checkout_commit(self, path):
-        pass
-    def _pull_changes(self, path):
-        if not self.commit:
-            execute_command_assert_success("hg pull", cwd=path)
+    def _pull(self, path):
+        execute_command_assert_success("hg pull", cwd=path)
 
 class GitResource(DVCSResource):
-    def _clone_into(self, path):
+    def _clone(self, path):
         execute_command_assert_success("git clone {0} {1}".format(self.repo_url, path))
-    def _checkout_branch(self, path):
-        assert self.branch
-        execute_command_assert_success(
-            "git fetch origin && git checkout -b {0} origin/{0}".format(self.branch),
-            cwd=path)
-    def _checkout_commit(self, path):
-        assert self.commit
-        execute_command_assert_success(
-            "git fetch origin && git checkout {0} && git reset --hard".format(self.commit),
-            cwd=path
-            )
-    def _pull_changes(self, path):
+        if self.branch:
+            execute_command_assert_success(
+                "git checkout -b {0} origin/{0}".format(self.branch),
+                cwd=path
+                )
+        if self.commit or self.tag:
+            execute_command_assert_success(
+                "git checkout {0}".format(self.commit or self.tag),
+                cwd=path
+                )
+    def _pull(self, path):
         execute_command_assert_success(
             "git pull",
             cwd=path

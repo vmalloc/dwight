@@ -27,10 +27,16 @@ pushd $HOME/hgrepo
 touch fetched_from_hg_file
 hg add fetched_from_hg_file
 hg commit -m "default commit"
+# hg branch
 hg branch branch
 hg rm fetched_from_hg_file
+touch fetched_from_hg_tag_file
+hg add .
+hg commit -m "tag commit"
+hg tag tag
+hg rm fetched_from_hg_tag_file
 touch fetched_from_hg_branch_file
-hg add fetched_from_hg_branch_file
+hg add .
 hg commit -m "branch commit"
 hg serve -d --prefix repository
 popd
@@ -64,6 +70,10 @@ git init git_repository
 pushd git_repository
 git commit -a --allow-empty -m init
 git checkout -b branch
+touch fetched_from_git_tag_file
+git add .
+git commit -a -m "tag commit"
+git rm fetched_from_git_tag_file
 touch fetched_from_git_branch_file
 git add .
 git commit -a -m "branch commit"

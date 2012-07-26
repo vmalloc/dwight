@@ -25,7 +25,13 @@ EOF
 hg init $HOME/hgrepo
 pushd $HOME/hgrepo
 touch fetched_from_hg_file
-hg commit -m some_commit
+hg add fetched_from_hg_file
+hg commit -m "default commit"
+hg branch branch
+hg rm fetched_from_hg_file
+touch fetched_from_hg_branch_file
+hg add fetched_from_hg_branch_file
+hg commit -m "branch commit"
 hg serve -d --prefix repository
 popd
 
@@ -37,7 +43,12 @@ sudo service nginx start
 mkdir -p /tmp/base_image
 sudo debootstrap --variant=buildd --arch amd64 precise /tmp/base_image http://archive.ubuntu.com/ubuntu/
 sudo touch /tmp/base_image/dwight_base_image_file
-sudo mkdir -p /tmp/base_image/mounts/{fetched_from_git,fetched_from_hg,fetched_from_http,fetched_from_ssh,fetched_from_local_path}
+
+mkdir -p /tmp/base_image/mounts/
+pushd /tmp/base_image/mounts/
+sudo mkdir -p fetched_from_git fetched_from_hg fetched_from_http fetched_from_ssh fetched_from_local_path fetched_from_git_branch fetched_from_hg_branch
+popd
+
 mksquashfs /tmp/base_image /usr/share/nginx/www/ubuntu_precise64.squashfs
 
 # setup external squashfs (to be exported over http)
@@ -46,9 +57,17 @@ touch /tmp/external_image/fetched_from_http_file
 mksquashfs /tmp/external_image /usr/share/nginx/www/fetched_from_http.squashfs
 
 # setup git repository
+git config --global user.name "John Doe"
+git config --global user.email "johndoe@email.com"
 pushd /var/cache/git
 git init git_repository
 pushd git_repository
+git commit -a --allow-empty -m init
+git checkout -b branch
+touch fetched_from_git_branch_file
+git add .
+git commit -a -m "branch commit"
+git checkout master
 touch fetched_from_git_file
 git add .
-git commit -a -m init
+git commit -a -m "master commit"

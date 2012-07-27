@@ -4,7 +4,6 @@ import platform
 import string
 import subprocess
 import sys
-from tempfile import mkdtemp
 
 if platform.system().lower() == "linux":
     import unshare
@@ -29,6 +28,9 @@ from .python_compat import iteritems
 from .resources import Resource
 
 _logger = logging.getLogger(__name__)
+
+_DWIGHT_CACHE_DIR = os.path.expanduser("~/.dwight-cache")
+_BASE_IMAGE_MOUNT_PATH = os.path.join(_DWIGHT_CACHE_DIR, "mounts", "base_image")
 
 class Environment(object):
     def __init__(self):
@@ -96,11 +98,12 @@ class Environment(object):
         _logger.debug("calling unshare()")
         unshare.unshare(unshare.CLONE_NEWNS)
     def _mount_base_image(self):
-        path = mkdtemp()
-        _logger.debug("Mounting base image %r in %r", self.base_image, path)
+        if not os.path.isdir(_BASE_IMAGE_MOUNT_PATH):
+            os.makedirs(_BASE_IMAGE_MOUNT_PATH)
+        _logger.debug("Mounting base image %r in %r", self.base_image, _BASE_IMAGE_MOUNT_PATH)
         base_image_path = self.base_image.get_path(self)
-        self._mount_regular_file(base_image_path, path)
-        return path
+        self._mount_regular_file(base_image_path, _BASE_IMAGE_MOUNT_PATH)
+        return _BASE_IMAGE_MOUNT_PATH
     def _mount_includes(self, base_path):
         for include in self.includes:
             _logger.debug("Fetching include %s...", include)

@@ -12,13 +12,7 @@ else:
     unshare = None
 
 from .cache import Cache
-from .include import Include
-from .exceptions import (
-    CannotLoadConfiguration,
-    InvalidConfiguration,
-    NotRootException,
-    UnknownConfigurationOptions,
-    )
+from .config import DwightConfiguration
 from .platform_utils import (
     execute_command,
     execute_command_assert_success,
@@ -30,43 +24,20 @@ from .resources import Resource
 _logger = logging.getLogger(__name__)
 
 _DWIGHT_CACHE_DIR = os.path.expanduser("~/.dwight-cache")
-_BASE_IMAGE_MOUNT_PATH = os.path.join(_DWIGHT_CACHE_DIR, "mounts", "base_image")
+_ROOT_IMAGE_MOUNT_PATH = os.path.join(_DWIGHT_CACHE_DIR, "mounts", "root_image")
 
 class Environment(object):
     def __init__(self):
         super(Environment, self).__init__()
-        self.reset_configuration()
         self.cache = Cache(os.path.expanduser("~/.dwight-cache"))
-    def reset_configuration(self):
-        self.base_image = None
-        self.includes = []
-        self.environ = {}
-    def load_configuration_file(self, filename):
-        with open(filename, "r") as configuration_file:
-            self.load_configuration_string(configuration_file.read())
-    def load_configuration_string(self, s):
-        d = {}
-        try:
-            exec(s, {"Include" : Include}, d)
-        except Exception as e:
-            raise CannotLoadConfiguration("Cannot load configuration ({0})".format(e))
-        self.reset_configuration()
-        if "ROOT_IMAGE" not in d:
-            raise InvalidConfiguration("ROOT_IMAGE is missing in configuration")
-        self.base_image = Resource.from_string(d.pop("ROOT_IMAGE"))
-        self.includes = d.pop("INCLUDES", [])
-        self.environ = d.pop("ENVIRON", {})
-        unknown_parameters = self._get_unknown_parameters(d)
-        if unknown_parameters:
-            raise UnknownConfigurationOptions("Unknown options: {0}".format(", ".join(d)))
-    def _get_unknown_parameters(self, configuration_dict):
-        return [key for key in configuration_dict if key.isupper()]
+        self.config = DwightConfiguration()
     ############################################################################
     def run_shell(self):
         self.run_command_in_chroot(get_user_shell())
     def run_command_in_chroot(self, cmd):
         if os.getuid() != 0:
             raise NotRootException("Dwight must be run as root")
+        self.config.check()
         child_pid = os.fork()
         if child_pid == 0:
             self._run_command_in_chroot_as_forked_child(cmd)
@@ -79,7 +50,7 @@ class Environment(object):
             self._mount_includes(path)
             p = execute_command(
                 "env {env} /usr/sbin/chroot {path} {cmd}".format(
-                    env=" ".join('{0}="{1}"'.format(key, value) for key, value in iteritems(self.environ)),
+                    env=" ".join('{0}="{1}"'.format(key, value) for key, value in iteritems(self.config["ENVIRON"])),
                     path=path,
                     cmd=cmd)
                     )
@@ -98,14 +69,15 @@ class Environment(object):
         _logger.debug("calling unshare()")
         unshare.unshare(unshare.CLONE_NEWNS)
     def _mount_base_image(self):
-        if not os.path.isdir(_BASE_IMAGE_MOUNT_PATH):
-            os.makedirs(_BASE_IMAGE_MOUNT_PATH)
-        _logger.debug("Mounting base image %r in %r", self.base_image, _BASE_IMAGE_MOUNT_PATH)
-        base_image_path = self.base_image.get_path(self)
-        self._mount_regular_file(base_image_path, _BASE_IMAGE_MOUNT_PATH)
-        return _BASE_IMAGE_MOUNT_PATH
+        if not os.path.isdir(_ROOT_IMAGE_MOUNT_PATH):
+            os.makedirs(_ROOT_IMAGE_MOUNT_PATH)
+        root_image = Resource.from_string(self.config["ROOT_IMAGE"])
+        _logger.debug("Mounting base image %r in %r", root_image, _ROOT_IMAGE_MOUNT_PATH)
+        root_image_path = root_image.get_path(self)
+        self._mount_regular_file(root_image_path, _ROOT_IMAGE_MOUNT_PATH)
+        return _ROOT_IMAGE_MOUNT_PATH
     def _mount_includes(self, base_path):
-        for include in self.includes:
+        for include in self.config["INCLUDES"]:
             _logger.debug("Fetching include %s...", include)
             path = include.to_resource().get_path(self)
             self._mount_path(path, base_path, include.dest)

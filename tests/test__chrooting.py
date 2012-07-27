@@ -10,7 +10,8 @@ class ChrootingTestCase(EnvironmentTestCase):
             self.skipTest("Not root")
         if platform.system() != "Linux":
             self.skipTest("Not linux")
-        self.environment.load_configuration_file(os.path.join(os.path.dirname(__file__), "..", "example_config.py"))
+        with open(os.path.join(os.path.dirname(__file__), "..", "example_config.py"), "r") as example_config:
+            self.environment.config.load_from_string(example_config.read())
     def test__chrooting(self):
         self.assertChrootFileExists("/dwight_base_image_file")
         self.assertMountSuccessful("fetched_from_local_path")

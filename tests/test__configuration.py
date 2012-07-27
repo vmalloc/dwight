@@ -29,4 +29,19 @@ class ConfigurationLoadingTest(EnvironmentTestCase):
             self.environment.config.load_from_string("ROOT_IMAGE='a'\nA=2")
         with self.assertRaises(UnknownConfigurationOptions):
             self.environment.config["A"] = 2
+    def test__configuration_state(self):
+        first_config = """
+ROOT_IMAGE = "a"
+INCLUDES = [Include("/a", "/x")]
+        """
+        second_config = """
+ROOT_IMAGE = "b"
+INCLUDES += [Include("/b", "/x")]
+        """
+        self.environment.config.load_from_string(first_config)
+        self.environment.config.load_from_string(second_config)
+        self.assertEquals(self.environment.config["ROOT_IMAGE"], "b")
+        self.assertEquals([include.dest for include in self.environment.config["INCLUDES"]],
+                          ["/a", "/b"])
+        
     

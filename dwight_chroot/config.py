@@ -1,3 +1,5 @@
+import copy
+
 from .exceptions import (
     CannotLoadConfiguration,
     InvalidConfiguration,
@@ -5,7 +7,7 @@ from .exceptions import (
     UnknownConfigurationOptions,
     )
 from .include import Include
-    
+
 class DwightConfiguration(object):
     def __init__(self):
         super(DwightConfiguration, self).__init__()
@@ -22,7 +24,7 @@ class DwightConfiguration(object):
             raise UnknownConfigurationOptions("Unknown configuration option: {0!r}".format(key))
         self._config[key] = value
     def load_from_string(self, s):
-        d = {}
+        d = copy.deepcopy(self._config)
         try:
             exec(s, {"Include" : Include}, d)
         except Exception as e:

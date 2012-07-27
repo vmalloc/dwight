@@ -47,7 +47,7 @@ class Environment(object):
     def _run_command_in_chroot_as_forked_child(self, cmd):
         try:
             self._unshare_mount_points()
-            path = self._mount_base_image()
+            path = self._mount_root_image()
             self._mount_includes(path)
             os.chroot(path)
             self._set_uid()
@@ -84,7 +84,7 @@ class Environment(object):
             raise PlatformNotSupported("{0} is not supported".format(platform.system()))
         _logger.debug("calling unshare()")
         unshare.unshare(unshare.CLONE_NEWNS)
-    def _mount_base_image(self):
+    def _mount_root_image(self):
         if not os.path.isdir(_ROOT_IMAGE_MOUNT_PATH):
             os.makedirs(_ROOT_IMAGE_MOUNT_PATH)
         root_image = Resource.from_string(self.config["ROOT_IMAGE"])

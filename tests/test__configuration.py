@@ -1,4 +1,6 @@
 from .test_utils import EnvironmentTestCase
+import os
+from tempfile import mkdtemp
 from dwight_chroot.exceptions import (
     CannotLoadConfiguration,
     InvalidConfiguration,
@@ -29,6 +31,15 @@ class ConfigurationLoadingTest(EnvironmentTestCase):
             self.environment.config.load_from_string("ROOT_IMAGE='a'\nA=2")
         with self.assertRaises(UnknownConfigurationOptions):
             self.environment.config["A"] = 2
+    def test__user_config_file(self):
+        path = os.path.join(mkdtemp(), "subdir", "config.py")
+        self.environment.config["ROOT_IMAGE"] = "bla" # to make check() work later
+        self.assertFalse(os.path.exists(path))
+        self.assertFalse(os.path.exists(os.path.dirname(path)))
+        self.environment.config.process_user_config_file(path)
+        self.assertTrue(os.path.isfile(path))
+        self.environment.config.check()
+        self.assertGreater(os.path.getsize(path), 0)
     def test__configuration_state(self):
         first_config = """
 ROOT_IMAGE = "a"

@@ -17,7 +17,7 @@ def _run_cmd(env, args):
 ################################## Boilerplate #################################
 
 parser = argparse.ArgumentParser(usage="%(prog)s [options] action [action options/args]")
-parser.add_argument("-c", "--config-file", default="dwight_config.py", type=open)
+parser.add_argument("-c", "--config-file", dest="config_files", type=open, action="append", default=[])
 parser.add_argument("-v", action="append_const", const=1, dest="verbosity", default=[], 
                     help="Be more verbose. Can be specified multiple times to increase verbosity further")
 subparsers = parser.add_subparsers(help="Action to be taken")
@@ -31,7 +31,8 @@ cmd_command_parser.add_argument("cmd")
 
 def main(args):
     env = Environment()
-    env.config.load_from_string(args.config_file.read())
+    for config_file in args.config_files:
+        env.config.load_from_string(config_file.read())
     try:
         return args.action(env, args)
     except UsageException as e:

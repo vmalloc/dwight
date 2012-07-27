@@ -12,8 +12,6 @@ Chrooted environments are constructed from a base image (currently only *squashf
   
 # Usage
 
-## Basic Usage
-
 To run `dwight` you'll need a configuration file. A configuration file should at least contain the location of the base image. Here is a minimal configuration file:
 
       ROOT_IMAGE = "/path/to/image.squashfs"
@@ -24,11 +22,25 @@ Now just run:
  
 This will drop you into a shell in your chrooted environment.
 
-## Includes
+# Configuration
+
+Dwight receives its configuration from files specified with the *-c* flag. Multiple files can be specified for this option.
+
+Dwight configuration files are simple Python files that contain settings in the form of underscore-separated uppercase strings (like THIS_ONE). variables not matching that criterion will be silently ignored (enabling you to use them for temporary variables etc.).
+
+When Dwight loads configuration, it first looks for `~/.dwightrc` and loads it. If it doesn't exist an empty one will be created. Afterwards each configuration file from command line is loaded in turn, and the end result is the aggregation of all the config files.
+
+**PLEASE NOTE** that when a configuration file is processed it has access to the parameters set by previous configuration files, so it can choose whether to override them or extend them. This is important, for instance, when using the `INCLUDES` option -- assigning to it will drop previous entries, so prefer using the `+=` operator instead.
+
+## ROOT_IMAGE
+
+The path to the root image for the chroot. This can also be a URL to an image file over http.
+
+## INCLUDES
 
 To bind paths or resources to your chroot environment, use the `INCLUDES` varaible in your configuration file:
 
-      INCLUDES = [
+      INCLUDES += [
         Include("/path/in/chroot", "/local/path"),
       ]
 
@@ -58,7 +70,7 @@ Or from http/https:
 
         Include("/mount", "http://server/files/image.squashfs")
 
-## Environment Variables
+## ENVIRON
 
 You can control the environment variables set up by dwight using the `ENVIRON` variable in your configuration file:
 

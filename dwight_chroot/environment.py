@@ -13,6 +13,7 @@ else:
 
 from .cache import Cache
 from .config import DwightConfiguration
+from .exceptions import NotRootException
 from .platform_utils import (
     execute_command,
     execute_command_assert_success,

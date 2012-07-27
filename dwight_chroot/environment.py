@@ -49,21 +49,33 @@ class Environment(object):
             self._unshare_mount_points()
             path = self._mount_base_image()
             self._mount_includes(path)
+            os.chroot(path)
+            self._setuid()
             p = execute_command(
-                "env {env} /usr/sbin/chroot {path} {cmd}".format(
+                "env {env} {cmd}".format(
                     env=" ".join('{0}="{1}"'.format(key, value) for key, value in iteritems(self.config["ENVIRON"])),
-                    path=path,
                     cmd=cmd)
                     )
             os._exit(p.wait())
         except Exception:
             _logger.error("Error occurred running command", exc_info=True)
-            os._exit(-1)
+            raise
     def _wait_for_forked_child(self, child_pid):
         _, exit_code = os.waitpid(child_pid, 0)
         exit_code >>= 8
         _logger.debug("_wait_for_forked_child: child returned %s", exit_code)
         return exit_code
+    def _setuid(self):
+        uid = self.config["UID"]
+        if uid is None:
+            uid = self._try_get_sudo_uid()
+        if uid is not None:
+            os.setuid(uid)
+    def _try_get_sudo_uid(self):
+        sudo_uid = os.environ.get("SUDO_UID")
+        if sudo_uid is not None:
+            return int(sudo_uid)
+            
     def _unshare_mount_points(self):
         if unshare is None:
             raise PlatformNotSupported("{0} is not supported".format(platform.system()))

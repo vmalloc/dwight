@@ -78,6 +78,14 @@ You can control the environment variables set up by dwight using the `ENVIRON` v
            "PATH" : "$PATH:another/extra/path/here"
       }
 
+## UID
+
+You can control the uid of the chrooted command. 
+
+If the UID parameter is an integer, it will be used as the user id to execute commands.
+
+If the UID is None, Dwight will attempt to fetch the uid from the `SUDO_UID` environment variable. If such a variable does not exist, the command will run as root.
+
 # Known Issues
 
 * Currently including a single git/hg repository multiple times with different commits/branches/tags will cause separate copies of the repository in the cache

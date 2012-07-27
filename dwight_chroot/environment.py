@@ -50,7 +50,8 @@ class Environment(object):
             path = self._mount_base_image()
             self._mount_includes(path)
             os.chroot(path)
-            self._setuid()
+            self._set_uid()
+            self._set_pwd()
             p = execute_command(
                 "env {env} {cmd}".format(
                     env=" ".join('{0}="{1}"'.format(key, value) for key, value in iteritems(self.config["ENVIRON"])),
@@ -65,12 +66,14 @@ class Environment(object):
         exit_code >>= 8
         _logger.debug("_wait_for_forked_child: child returned %s", exit_code)
         return exit_code
-    def _setuid(self):
+    def _set_uid(self):
         uid = self.config["UID"]
         if uid is None:
             uid = self._try_get_sudo_uid()
         if uid is not None:
             os.setuid(uid)
+    def _set_pwd(self):
+        os.chdir(self.config["PWD"])
     def _try_get_sudo_uid(self):
         sudo_uid = os.environ.get("SUDO_UID")
         if sudo_uid is not None:

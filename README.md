@@ -78,6 +78,10 @@ You can control the environment variables set up by dwight using the `ENVIRON` v
            "PATH" : "$PATH:another/extra/path/here"
       }
 
+## PWD
+
+The working directory for the command to run. By default this is the working directory in which `dwight` was run.
+
 ## UID
 
 You can control the uid of the chrooted command. 

@@ -15,6 +15,7 @@ class ChrootingTestCase(EnvironmentTestCase):
             self.environment.config.load_from_string(example_config.read())
         # this is necessary for capturing output of chrooted commands
         self.environment.config["INCLUDES"].append(Include("/tmp", "/tmp"))
+        self.environment.config["PWD"] = "/var"
     def test__root_image(self):
         self.assertChrootFileExists("/dwight_base_image_file")
     def test__include_local_path(self):
@@ -36,6 +37,8 @@ class ChrootingTestCase(EnvironmentTestCase):
         self.assertIsNone(self.environment.config["UID"])
         self.assertIn("SUDO_UID", os.environ)
         self.assertChrootUid(int(os.environ["SUDO_UID"]))
+    def test__pwd(self):
+        self.assertChrootOutput("pwd", self.environment.config["PWD"] + "\n")
     def assertMountSuccessful(self, name):
         self.assertChrootFileExists("/mounts/{0}/{0}_file".format(name))
     def assertChrootFileExists(self, path):

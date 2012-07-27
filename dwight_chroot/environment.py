@@ -57,10 +57,10 @@ class Environment(object):
             os._exit(p.wait())
         except Exception:
             _logger.error("Error occurred running command", exc_info=True)
-            raise
+            os._exit(-1)
     def _wait_for_forked_child(self, child_pid):
         _, exit_code = os.waitpid(child_pid, 0)
-        exit_code &= 0xff
+        exit_code >>= 8
         _logger.debug("_wait_for_forked_child: child returned %s", exit_code)
         return exit_code
     def _unshare_mount_points(self):

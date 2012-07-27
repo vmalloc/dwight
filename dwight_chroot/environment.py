@@ -34,7 +34,7 @@ class Environment(object):
         self.config = DwightConfiguration()
     ############################################################################
     def run_shell(self):
-        self.run_command_in_chroot(get_user_shell())
+        return self.run_command_in_chroot(get_user_shell())
     def run_command_in_chroot(self, cmd):
         if os.getuid() != 0:
             raise NotRootException("Dwight must be run as root")

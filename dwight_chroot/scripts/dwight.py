@@ -9,10 +9,10 @@ from ..exceptions import UsageException
 #################################### Actions ###################################
 
 def _run_shell(env, args):
-    env.run_shell()
+    return env.run_shell()
 
 def _run_cmd(env, args):
-    return env.run_command_in_chroot(args.cmd).returncode
+    return env.run_command_in_chroot(args.cmd)
     
 ################################## Boilerplate #################################
 

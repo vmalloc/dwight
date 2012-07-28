@@ -18,6 +18,8 @@ def _run_cmd(env, args):
 
 parser = argparse.ArgumentParser(usage="%(prog)s [options] action [action options/args]")
 parser.add_argument("-c", "--config-file", dest="config_files", type=open, action="append", default=[])
+parser.add_argument("-e", "--exclude-dwightrc", dest="exclude_user_config", action="store_true", default=False,
+                    help="Don't use the default configuration file in ~/.dwightrc")
 parser.add_argument("-v", action="append_const", const=1, dest="verbosity", default=[], 
                     help="Be more verbose. Can be specified multiple times to increase verbosity further")
 subparsers = parser.add_subparsers(help="Action to be taken")
@@ -31,6 +33,10 @@ cmd_command_parser.add_argument("cmd")
 
 def main(args):
     env = Environment()
+
+    if not args.exclude_user_config:
+        env.config.process_user_config_file()
+
     for config_file in args.config_files:
         env.config.load_from_string(config_file.read())
     try:

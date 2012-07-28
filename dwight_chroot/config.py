@@ -29,6 +29,7 @@ class DwightConfiguration(object):
             GID = None,
             UID = None,
             PWD = os.path.abspath("."),
+            NUM_LOOP_DEVICES = None,
             )
         self._known_keys = set(self._config)
     def __getitem__(self, key):

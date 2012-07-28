@@ -90,6 +90,10 @@ If the value is an integer, it will be used as the user id or the group id to ex
 
 If the value is None, Dwight will attempt to fetch the uid from the `SUDO_UID`/`SUDO_GID` environment variables. If the variable does not exist, the command will run as root.
 
+## NUM_LOOP_DEVICES
+
+This optional variable controls the amount of loop devices to ensure before `chroot`ing. If it is set, and no hard limit is configured for number of loop devices, `dwight` will ensure this number of loop devices exists in `/dev`.
+
 # Known Issues
 
 * Currently including a single git/hg repository multiple times with different commits/branches/tags will cause separate copies of the repository in the cache

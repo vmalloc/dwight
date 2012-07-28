@@ -1,7 +1,9 @@
 import os
 import platform
+import re
 import tempfile
 from dwight_chroot.include import Include
+from dwight_chroot.platform_utils import execute_command_assert_success
 from .test_utils import EnvironmentTestCase
 
 class ChrootingTestCase(EnvironmentTestCase):
@@ -16,6 +18,7 @@ class ChrootingTestCase(EnvironmentTestCase):
         # this is necessary for capturing output of chrooted commands
         self.environment.config["INCLUDES"].append(Include("/tmp", "/tmp"))
         self.environment.config["PWD"] = "/var"
+        self.environment.config["NUM_LOOP_DEVICES"] = 8
     def test__root_image(self):
         self.assertChrootFileExists("/dwight_base_image_file")
     def test__include_local_path(self):
@@ -46,6 +49,17 @@ class ChrootingTestCase(EnvironmentTestCase):
         self.assertChrootGid(int(os.environ["SUDO_GID"]))
     def test__pwd(self):
         self.assertChrootOutput("pwd", self.environment.config["PWD"] + "\n")
+    def test__num_loop_devices(self):
+        self.environment.config["NUM_LOOP_DEVICES"] = 20
+        for loop_device in self.get_all_loop_devices():
+            os.unlink(loop_device)
+        self.assertChrootSuccess()
+        loop_devices = self.get_all_loop_devices()
+        self.assertEquals(len(loop_devices), self.environment.config["NUM_LOOP_DEVICES"])
+    def get_all_loop_devices(self):
+        return [os.path.join("/dev", filename) 
+                for filename in os.listdir("/dev") 
+                if re.match(r"loop\d+", filename)]
     def assertMountSuccessful(self, name):
         self.assertChrootFileExists("/mounts/{0}/{0}_file".format(name))
     def assertChrootFileExists(self, path):
@@ -63,3 +77,5 @@ class ChrootingTestCase(EnvironmentTestCase):
         self.assertEquals(returncode, 0)
         with open(output_file_path, "r") as output_file:
             self.assertEquals(output_file.read(), output)
+    def assertChrootSuccess(self):
+        self.assertEquals(0, self.environment.run_command_in_chroot("true"))

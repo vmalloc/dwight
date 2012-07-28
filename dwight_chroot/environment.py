@@ -39,6 +39,7 @@ class Environment(object):
         if os.getuid() != 0:
             raise NotRootException("Dwight must be run as root")
         self.config.check()
+        self._check_num_loop_devices()
         child_pid = os.fork()
         if child_pid == 0:
             self._run_command_in_chroot_as_forked_child(cmd)
@@ -118,3 +119,14 @@ class Environment(object):
     def _mount_directory(self, path, mount_point):
         _logger.debug("Mounting (binding) %r to %s", path, mount_point)
         execute_command_assert_success("mount -n --bind {0} {1}".format(path, mount_point))
+    def _check_num_loop_devices(self):
+        if self.config["NUM_LOOP_DEVICES"] is None:
+            return
+        with open("/proc/cmdline") as cmdline_file:
+            if "max_loop" in cmdline_file.read():
+                _logger.warning("max_loop was detected in /proc/cmdline. NUM_LOOP_DEVICES is ignored")
+                return
+        for i in range(self.config["NUM_LOOP_DEVICES"]):
+            loop_device_path = "/dev/loop{0}".format(i)
+            if not os.path.exists(loop_device_path):
+                execute_command_assert_success("mknod -m660 {0} b 7 {1}".format(loop_device_path, i))

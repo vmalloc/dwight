@@ -82,13 +82,13 @@ You can control the environment variables set up by dwight using the `ENVIRON` v
 
 The working directory for the command to run. By default this is the working directory in which `dwight` was run.
 
-## UID
+## UID/GID
 
-You can control the uid of the chrooted command. 
+You can control the uid/gid of the chrooted command. 
 
-If the UID parameter is an integer, it will be used as the user id to execute commands.
+If the value is an integer, it will be used as the user id or the group id to execute commands.
 
-If the UID is None, Dwight will attempt to fetch the uid from the `SUDO_UID` environment variable. If such a variable does not exist, the command will run as root.
+If the value is None, Dwight will attempt to fetch the uid from the `SUDO_UID`/`SUDO_GID` environment variables. If the variable does not exist, the command will run as root.
 
 # Known Issues
 

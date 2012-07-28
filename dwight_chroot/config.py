@@ -26,6 +26,7 @@ class DwightConfiguration(object):
             ROOT_IMAGE = None,
             INCLUDES = [],
             ENVIRON = {},
+            GID = None,
             UID = None,
             PWD = os.path.abspath("."),
             )

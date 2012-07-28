@@ -37,6 +37,13 @@ class ChrootingTestCase(EnvironmentTestCase):
         self.assertIsNone(self.environment.config["UID"])
         self.assertIn("SUDO_UID", os.environ)
         self.assertChrootUid(int(os.environ["SUDO_UID"]))
+    def test__gid(self):
+        self.environment.config["GID"] = 0
+        self.assertChrootGid(0)
+    def test__sudo_gid_by_default(self):
+        self.assertIsNone(self.environment.config["GID"])
+        self.assertIn("SUDO_GID", os.environ)
+        self.assertChrootGid(int(os.environ["SUDO_GID"]))
     def test__pwd(self):
         self.assertChrootOutput("pwd", self.environment.config["PWD"] + "\n")
     def assertMountSuccessful(self, name):
@@ -46,6 +53,8 @@ class ChrootingTestCase(EnvironmentTestCase):
         self.assertEquals(returncode, 0, "File {0!r} does not exist".format(path))
     def assertChrootUid(self, id):
         self.assertChrootOutput("id -u", str(id) + "\n")
+    def assertChrootGid(self, id):
+        self.assertChrootOutput("id -g", str(id) + "\n")
     def assertChrootOutput(self, cmd, output):
         output_file_path = "/tmp/__dwight_testing_output"
         if os.path.exists(output_file_path):

@@ -50,7 +50,7 @@ class Environment(object):
             path = self._mount_root_image()
             self._mount_includes(path)
             os.chroot(path)
-            self._set_uid()
+            self._set_uid_gid()
             self._set_pwd()
             p = execute_command(
                 "env {env} {cmd}".format(
@@ -66,19 +66,24 @@ class Environment(object):
         exit_code >>= 8
         _logger.debug("_wait_for_forked_child: child returned %s", exit_code)
         return exit_code
-    def _set_uid(self):
-        uid = self.config["UID"]
-        if uid is None:
-            uid = self._try_get_sudo_uid()
-        if uid is not None:
-            os.setuid(uid)
+    def _set_uid_gid(self):
+        for field, setter in [
+                ("GID", os.setgid),
+                ("UID", os.setuid),
+        ]:            
+            config_value = self.config[field]
+            if config_value is None:
+                config_value = self._try_get_sudo_env_var(field)
+            if config_value is not None:
+                _logger.debug("Calling %s(%s)", setter, config_value)
+                setter(config_value)
     def _set_pwd(self):
         os.chdir(self.config["PWD"])
-    def _try_get_sudo_uid(self):
-        sudo_uid = os.environ.get("SUDO_UID")
-        if sudo_uid is not None:
-            return int(sudo_uid)
-            
+    def _try_get_sudo_env_var(self, var_name):
+        returned = os.environ.get("SUDO_" + var_name)
+        if returned is not None:
+            return int(returned)
+        return None
     def _unshare_mount_points(self):
         if unshare is None:
             raise PlatformNotSupported("{0} is not supported".format(platform.system()))

@@ -60,6 +60,18 @@ class ChrootingTestCase(EnvironmentTestCase):
         return [os.path.join("/dev", filename) 
                 for filename in os.listdir("/dev") 
                 if re.match(r"loop\d+", filename)]
+    def test__cache_not_owned_by_root(self):
+        if os.geteuid() != 0 or "SUDO_UID" not in os.environ or "SUDO_GID" not in os.environ:
+            self.skipTest("Test requires being run as sudo")
+        self.assertChrootSuccess()
+        for p, _, filenames in os.walk("~/.dwight-cache"):
+            for path in itertools.chain([p], (os.path.join(p, f) for f in filenames)):
+                path_stat = os.stat(p)
+                self.assertEquals(str(path_stat.st_uid), os.environ["SUDO_UID"], 
+                                  "{0} is unexpectedly owned by root user".format(p))
+                self.assertEquals(str(path_stat.st_gid), os.environ["SUDO_GID"],
+                                  "{0} is unexpectedly owned by root group".format(p))
+
     def assertMountSuccessful(self, name):
         self.assertChrootFileExists("/mounts/{0}/{0}_file".format(name))
     def assertChrootFileExists(self, path):

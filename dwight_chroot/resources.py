@@ -99,27 +99,30 @@ class MercurialResource(DVCSResource):
         if self.branch:
             cmd += " -b {0}".format(self.branch)
         cmd += " {0} {1}".format(self.repo_url, path)
-        execute_command_assert_success(cmd)
+        execute_command_assert_success(cmd, unsudo=True)
     def _pull(self, path):
-        execute_command_assert_success("hg pull", cwd=path)
+        execute_command_assert_success("hg pull", cwd=path, unsudo=True)
 
 class GitResource(DVCSResource):
     def _clone(self, path):
-        execute_command_assert_success("git clone {0} {1}".format(self.repo_url, path))
+        execute_command_assert_success("git clone {0} {1}".format(self.repo_url, path), unsudo=True)
         if self.branch:
             execute_command_assert_success(
                 "git checkout -b {0} origin/{0}".format(self.branch),
-                cwd=path
+                cwd=path,
+                unsudo=True,
                 )
         if self.commit or self.tag:
             execute_command_assert_success(
                 "git checkout {0}".format(self.commit or self.tag),
-                cwd=path
+                cwd=path,
+                unsudo=True,
                 )
     def _pull(self, path):
         execute_command_assert_success(
             "git pull",
-            cwd=path
+            cwd=path,
+            unsudo=True,
             )
 
 class HTTPResource(CacheableResource):

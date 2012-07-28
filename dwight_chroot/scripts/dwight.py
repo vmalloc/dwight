@@ -5,6 +5,7 @@ import logging
 import sys
 from ..environment import Environment
 from ..exceptions import UsageException
+from ..platform_utils import unsudo_context
 
 #################################### Actions ###################################
 
@@ -34,11 +35,11 @@ cmd_command_parser.add_argument("cmd")
 def main(args):
     env = Environment()
 
-    if not args.exclude_user_config:
-        env.config.process_user_config_file()
-
-    for config_file in args.config_files:
-        env.config.load_from_string(config_file.read())
+    with unsudo_context():
+        if not args.exclude_user_config:
+            env.config.process_user_config_file()
+        for config_file in args.config_files:
+            env.config.load_from_string(config_file.read())
     try:
         return args.action(env, args)
     except UsageException as e:

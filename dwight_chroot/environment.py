@@ -12,6 +12,7 @@ from .platform_utils import (
     execute_command_assert_success,
     get_user_shell,
     unshare_mounts,
+    unsudo_context,
     )
 from .python_compat import iteritems
 from .resources import Resource
@@ -24,7 +25,8 @@ _ROOT_IMAGE_MOUNT_PATH = os.path.join(_DWIGHT_CACHE_DIR, "mounts", "root_image")
 class Environment(object):
     def __init__(self):
         super(Environment, self).__init__()
-        self.cache = Cache(os.path.expanduser("~/.dwight-cache"))
+        with unsudo_context():
+            self.cache = Cache(os.path.expanduser("~/.dwight-cache"))
         self.config = DwightConfiguration()
     ############################################################################
     def run_shell(self):
@@ -81,16 +83,19 @@ class Environment(object):
         return None
     def _mount_root_image(self):
         if not os.path.isdir(_ROOT_IMAGE_MOUNT_PATH):
-            os.makedirs(_ROOT_IMAGE_MOUNT_PATH)
+            with unsudo_context():
+                os.makedirs(_ROOT_IMAGE_MOUNT_PATH)
         root_image = Resource.from_string(self.config["ROOT_IMAGE"])
         _logger.debug("Mounting base image %r in %r", root_image, _ROOT_IMAGE_MOUNT_PATH)
-        root_image_path = root_image.get_path(self)
+        with unsudo_context():
+            root_image_path = root_image.get_path(self)
         self._mount_squashfs(root_image_path, _ROOT_IMAGE_MOUNT_PATH)
         return _ROOT_IMAGE_MOUNT_PATH
     def _mount_includes(self, base_path):
         for include in self.config["INCLUDES"]:
             _logger.debug("Fetching include %s...", include)
-            path = include.to_resource().get_path(self)
+            with unsudo_context():
+                path = include.to_resource().get_path(self)
             self._mount_path(path, base_path, include.dest)
     def _mount_path(self, path, base_path, mount_point):
         path = os.path.abspath(path)

@@ -1,4 +1,5 @@
 import functools
+import logging
 import os
 import shutil
 
@@ -9,6 +10,8 @@ from .python_compat import (
 
 from .exceptions import UsageException
 from .platform_utils import execute_command_assert_success
+
+_logger = logging.getLogger(__name__)
 
 class Resource(object):
     @classmethod
@@ -130,7 +133,7 @@ class HTTPResource(CacheableResource):
         pass
     def fetch(self, path):
         output_path = os.path.join(path, self._filename)
-        print 'Fetching', self.url
+        _logger.info("Fetching %s", self.url)
         with open(output_path, "w") as output_file:
             shutil.copyfileobj(urllib2.urlopen(self.url), output_file)
         return output_path

@@ -96,7 +96,7 @@ class Environment(object):
         root_image = Resource.from_string(self.config["ROOT_IMAGE"])
         _logger.debug("Mounting base image %r in %r", root_image, _ROOT_IMAGE_MOUNT_PATH)
         root_image_path = root_image.get_path(self)
-        self._mount_regular_file(root_image_path, _ROOT_IMAGE_MOUNT_PATH)
+        self._mount_squashfs(root_image_path, _ROOT_IMAGE_MOUNT_PATH)
         return _ROOT_IMAGE_MOUNT_PATH
     def _mount_includes(self, base_path):
         for include in self.config["INCLUDES"]:
@@ -110,13 +110,13 @@ class Environment(object):
         mount_point = os.path.join(base_path, mount_point)
         if not os.path.exists(path):
             raise CannotMountPath("Cannot mount {0}: does not exist".format(path))
-        if os.path.isfile(path):
-            return self._mount_regular_file(path, mount_point)
-        return self._mount_directory(path, mount_point)
-    def _mount_regular_file(self, path, mount_point):
+        if os.path.isfile(path) and path.endswith('.squashfs'):
+            return self._mount_squashfs(path, mount_point)
+        return self._bind_mount(path, mount_point)
+    def _mount_squashfs(self, path, mount_point):
         _logger.debug("Mounting squashfs file %r to %s", path, mount_point)
         execute_command_assert_success("mount -n -t squashfs -o loop {0} {1}".format(path, mount_point))
-    def _mount_directory(self, path, mount_point):
+    def _bind_mount(self, path, mount_point):
         _logger.debug("Mounting (binding) %r to %s", path, mount_point)
         execute_command_assert_success("mount -n --bind {0} {1}".format(path, mount_point))
     def _check_num_loop_devices(self):

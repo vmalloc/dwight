@@ -7,8 +7,6 @@ with open(os.path.join(os.path.dirname(__file__), "dwight_chroot", "__version__.
     exec(version_file.read())
 
 _INSTALL_REQUIRES = []
-if platform.system().lower() == "linux":
-    _INSTALL_REQUIRES.append("python-unshare")
 
 setup(name="dwight-chroot",
       classifiers = [

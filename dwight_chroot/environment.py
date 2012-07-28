@@ -1,15 +1,8 @@
 import logging
 import os
-import platform
 import string
 import subprocess
 import sys
-
-if platform.system().lower() == "linux":
-    import unshare
-else:
-    # for testing purposes on systems which are not Linux...
-    unshare = None
 
 from .cache import Cache
 from .config import DwightConfiguration
@@ -18,6 +11,7 @@ from .platform_utils import (
     execute_command,
     execute_command_assert_success,
     get_user_shell,
+    unshare_mounts,
     )
 from .python_compat import iteritems
 from .resources import Resource
@@ -47,7 +41,7 @@ class Environment(object):
             return self._wait_for_forked_child(child_pid)
     def _run_command_in_chroot_as_forked_child(self, cmd):
         try:
-            self._unshare_mount_points()
+            unshare_mounts()
             path = self._mount_root_image()
             self._mount_includes(path)
             os.chroot(path)
@@ -85,11 +79,6 @@ class Environment(object):
         if returned is not None:
             return int(returned)
         return None
-    def _unshare_mount_points(self):
-        if unshare is None:
-            raise PlatformNotSupported("{0} is not supported".format(platform.system()))
-        _logger.debug("calling unshare()")
-        unshare.unshare(unshare.CLONE_NEWNS)
     def _mount_root_image(self):
         if not os.path.isdir(_ROOT_IMAGE_MOUNT_PATH):
             os.makedirs(_ROOT_IMAGE_MOUNT_PATH)

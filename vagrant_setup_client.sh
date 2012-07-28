@@ -1,8 +1,8 @@
 echo "192.168.1.11 server" >> /etc/hosts
 
 # setup packages
-sudo apt-get install -y python-setuptools build-essential python-dev squashfs-tools libnss-mdns git mercurial
-sudo easy_install nose ipdb ipdbplugin ipython
+sudo apt-get install -y python-setuptools build-essential python-dev squashfs-tools libnss-mdns git mercurial python3.2
+sudo easy_install nose ipdb ipdbplugin ipython tox
 pushd ~vagrant/src
 sudo python setup.py develop
 popd

@@ -15,7 +15,7 @@ from .platform_utils import (
     unsudo_context,
     )
 from .python_compat import iteritems
-from .resources import Resource
+from .resources import Resource, CacheableResource
 
 _logger = logging.getLogger(__name__)
 
@@ -36,16 +36,35 @@ class Environment(object):
             raise NotRootException("Dwight must be run as root")
         self.config.check()
         self._check_num_loop_devices()
+        root_image_path, include_paths = self._fetch_image_and_includes()
         child_pid = os.fork()
         if child_pid == 0:
-            self._run_command_in_chroot_as_forked_child(cmd)
+            self._run_command_in_chroot_as_forked_child(cmd, root_image_path, include_paths)
         else:
             return self._wait_for_forked_child(child_pid)
-    def _run_command_in_chroot_as_forked_child(self, cmd):
+    def _fetch_image_and_includes(self):
+        with unsudo_context():
+            used_keys = []
+            root_image_resource = Resource.from_string(self.config["ROOT_IMAGE"])
+            self._update_used_keys(used_keys, root_image_resource)
+            root_image_path = root_image_resource.get_path(self)
+            include_paths = {}
+            
+            for include in self.config["INCLUDES"]:
+                _logger.debug("Fetching include %s...", include)
+                include_resource = include.to_resource()
+                self._update_used_keys(used_keys, include_resource)
+                include_paths[include] = include_resource.get_path(self)
+        self.cache.cleanup(self.config["MAX_CACHE_SIZE"], used_keys)
+        return root_image_path, include_paths
+    def _update_used_keys(self, keys, resource):
+        if isinstance(resource, CacheableResource):
+            keys.append(resource.get_cache_key())
+    def _run_command_in_chroot_as_forked_child(self, cmd, root_image_path, include_paths):
         try:
             unshare_mounts()
-            path = self._mount_root_image()
-            self._mount_includes(path)
+            path = self._mount_root_image(root_image_path)
+            self._mount_includes(path, include_paths)
             os.chroot(path)
             self._set_uid_gid()
             self._set_pwd()
@@ -81,21 +100,15 @@ class Environment(object):
         if returned is not None:
             return int(returned)
         return None
-    def _mount_root_image(self):
+    def _mount_root_image(self, root_image_path):
         if not os.path.isdir(_ROOT_IMAGE_MOUNT_PATH):
             with unsudo_context():
                 os.makedirs(_ROOT_IMAGE_MOUNT_PATH)
-        root_image = Resource.from_string(self.config["ROOT_IMAGE"])
-        _logger.debug("Mounting base image %r in %r", root_image, _ROOT_IMAGE_MOUNT_PATH)
-        with unsudo_context():
-            root_image_path = root_image.get_path(self)
+        _logger.debug("Mounting base image %r in %r", root_image_path, _ROOT_IMAGE_MOUNT_PATH)
         self._mount_squashfs(root_image_path, _ROOT_IMAGE_MOUNT_PATH)
         return _ROOT_IMAGE_MOUNT_PATH
-    def _mount_includes(self, base_path):
-        for include in self.config["INCLUDES"]:
-            _logger.debug("Fetching include %s...", include)
-            with unsudo_context():
-                path = include.to_resource().get_path(self)
+    def _mount_includes(self, base_path, include_paths):
+        for include, path in iteritems(include_paths):
             self._mount_path(path, base_path, include.dest)
     def _mount_path(self, path, base_path, mount_point):
         path = os.path.abspath(path)

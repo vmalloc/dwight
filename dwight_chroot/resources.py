@@ -51,6 +51,7 @@ class CacheableResource(FetchedResource):
             env.cache.register_new_path(path, key)
         else:
             self.refresh(path)
+            env.cache.update_path(path)
         return path
     def get_cache_key(self):
         raise NotImplementedError() # pragma: no cover

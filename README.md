@@ -94,6 +94,10 @@ If the value is None, Dwight will attempt to fetch the uid from the `SUDO_UID`/`
 
 This optional variable controls the amount of loop devices to ensure before `chroot`ing. If it is set, and no hard limit is configured for number of loop devices, `dwight` will ensure this number of loop devices exists in `/dev`.
 
+## MAX_CACHE_SIZE
+
+The maximum size, in bytes, that the cache directory can occupy. Note that the total size of the cache directory may still exceed this value some times, like in cases where all the space is needed for current includes.
+
 # Known Issues
 
 * Currently including a single git/hg repository multiple times with different commits/branches/tags will cause separate copies of the repository in the cache

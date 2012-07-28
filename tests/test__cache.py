@@ -54,3 +54,29 @@ class CacheTest(TestCase):
     def test__new_item_on_already_existing_directory(self):
         os.makedirs(os.path.join(self.env.cache.root, "items", "0"))
         self.assertEquals(self.env.cache.create_new_path(), os.path.join(self.env.cache.root, "items", "1"))
+    def test__cache_cleanup(self):
+        cache = Cache(mkdtemp())
+        size = 1000
+        p1 = self._create_cache_item(cache, 1, size)
+        p2 = self._create_cache_item(cache, 2, size)
+        cache.cleanup(size * 2, [])
+        self.assertTrue(os.path.exists(p1))
+        self.assertTrue(os.path.exists(p2))
+        p3 = self._create_cache_item(cache, 3, size)
+        cache.cleanup(size * 2, [])
+        self.assertFalse(os.path.exists(p1))
+        self.assertTrue(os.path.exists(p2))
+        self.assertTrue(os.path.exists(p3))
+    def test__cleanup_used_keys(self):
+        cache = Cache(mkdtemp())
+        p1 = self._create_cache_item(cache, 1, 1000)
+        cache.cleanup(10, skip_keys=[1])
+        self.assertTrue(os.path.exists(p1))
+    def _create_cache_item(self, cache, key, size):
+        root_path = cache.create_new_path()
+        p = cache.create_new_path()
+        file_path = os.path.join(p, "file")
+        with open(file_path, "wb") as f:
+            f.write("\x00".encode("utf-8") * size)
+        cache.register_new_path(p, key)
+        return file_path

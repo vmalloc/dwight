@@ -43,7 +43,7 @@ class DwightConfiguration(object):
         if not os.path.isfile(user_config_file_path):
             self._ensure_user_config_file(user_config_file_path)
         with open(user_config_file_path) as user_config_file:
-            self.load_from_string(user_config_file)
+            self.load_from_string(user_config_file.read())
     def _ensure_user_config_file(self, user_config_file_path):
         if not os.path.isdir(os.path.dirname(user_config_file_path)):
             os.makedirs(os.path.dirname(user_config_file_path))

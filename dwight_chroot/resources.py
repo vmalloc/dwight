@@ -130,6 +130,7 @@ class HTTPResource(CacheableResource):
         pass
     def fetch(self, path):
         output_path = os.path.join(path, self._filename)
+        print 'Fetching', self.url
         with open(output_path, "w") as output_file:
             shutil.copyfileobj(urllib2.urlopen(self.url), output_file)
         return output_path

@@ -4,6 +4,7 @@ import re
 import tempfile
 from dwight_chroot.include import Include
 from dwight_chroot.platform_utils import execute_command_assert_success
+from dwight_chroot.platform_utils import get_user_groups
 from .test_utils import EnvironmentTestCase
 
 class ChrootingTestCase(EnvironmentTestCase):
@@ -41,12 +42,14 @@ class ChrootingTestCase(EnvironmentTestCase):
         self.assertIn("SUDO_UID", os.environ)
         self.assertChrootUid(int(os.environ["SUDO_UID"]))
     def test__gid(self):
-        self.environment.config["GID"] = 0
-        self.assertChrootGid(0)
+        self.environment.config["UID"] = 0
+        self.environment.config["GIDS"] = [0]
+        self.assertChrootGids([0])
     def test__sudo_gid_by_default(self):
-        self.assertIsNone(self.environment.config["GID"])
-        self.assertIn("SUDO_GID", os.environ)
-        self.assertChrootGid(int(os.environ["SUDO_GID"]))
+        self.assertIsNone(self.environment.config["GIDS"])
+        ids = get_user_groups(int(os.environ["SUDO_UID"]))
+        self.assertIn(int(os.environ["SUDO_GID"]), ids)
+        self.assertChrootGids(ids)
     def test__pwd(self):
         self.assertChrootOutput("pwd", self.environment.config["PWD"] + "\n")
     def test__num_loop_devices(self):
@@ -79,15 +82,17 @@ class ChrootingTestCase(EnvironmentTestCase):
         self.assertEquals(returncode, 0, "File {0!r} does not exist".format(path))
     def assertChrootUid(self, id):
         self.assertChrootOutput("id -u", str(id) + "\n")
-    def assertChrootGid(self, id):
-        self.assertChrootOutput("id -g", str(id) + "\n")
+    def assertChrootGids(self, ids):
+        self.assertChrootOutput("id -G", " ".join(sorted(map(str, ids))) + "\n")
     def assertChrootOutput(self, cmd, output):
+        self.assertEquals(self.get_chroot_output(cmd), output)
+    def get_chroot_output(self, cmd):
         output_file_path = "/tmp/__dwight_testing_output"
         if os.path.exists(output_file_path):
             os.unlink(output_file_path)
         returncode = self.environment.run_command_in_chroot("{0} > {1}".format(cmd, output_file_path))
         self.assertEquals(returncode, 0)
         with open(output_file_path, "r") as output_file:
-            self.assertEquals(output_file.read(), output)
+            return output_file.read()
     def assertChrootSuccess(self):
         self.assertEquals(0, self.environment.run_command_in_chroot("true"))

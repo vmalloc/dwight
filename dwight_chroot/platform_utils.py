@@ -5,13 +5,24 @@ import logging
 import os
 import platform
 import pwd
+import grp
 import subprocess
 from .exceptions import CommandFailed
 
 _logger = logging.getLogger(__name__)
 
-def get_user_shell():
+def get_current_user_shell():
     return pwd.getpwuid(os.getuid()).pw_shell
+
+def get_user_groups(uid):
+    try:
+        username = pwd.getpwuid(uid).pw_name
+    except KeyError:
+        _logger.debug("Failed to get pwd information for uid %s", uid, exc_info=True)
+        return []
+
+    gids = [g.gr_gid for g in grp.getgrall() if username in g.gr_mem]
+    return gids
 
 def execute_command_assert_success(cmd, **kw):
     returned = execute_command(cmd, **kw)

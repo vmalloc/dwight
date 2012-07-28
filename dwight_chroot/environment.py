@@ -3,6 +3,7 @@ import os
 import string
 import subprocess
 import sys
+import functools
 
 from .cache import Cache
 from .config import DwightConfiguration
@@ -10,9 +11,10 @@ from .exceptions import NotRootException, CannotMountPath
 from .platform_utils import (
     execute_command,
     execute_command_assert_success,
-    get_user_shell,
     unshare_mounts,
     unsudo_context,
+    get_current_user_shell,
+    get_user_groups,
     )
 from .python_compat import iteritems
 from .resources import Resource
@@ -30,7 +32,7 @@ class Environment(object):
         self.config = DwightConfiguration()
     ############################################################################
     def run_shell(self):
-        return self.run_command_in_chroot(get_user_shell())
+        return self.run_command_in_chroot(get_current_user_shell())
     def run_command_in_chroot(self, cmd):
         if os.getuid() != 0:
             raise NotRootException("Dwight must be run as root")
@@ -47,7 +49,7 @@ class Environment(object):
             path = self._mount_root_image()
             self._mount_includes(path)
             os.chroot(path)
-            self._set_uid_gid()
+            self._set_uid_gids()
             self._set_pwd()
             p = execute_command(
                 "env {env} {cmd}".format(
@@ -63,14 +65,20 @@ class Environment(object):
         exit_code >>= 8
         _logger.debug("_wait_for_forked_child: child returned %s", exit_code)
         return exit_code
-    def _set_uid_gid(self):
-        for field, setter in [
-                ("GID", os.setgid),
-                ("UID", os.setuid),
+    def _get_host_uid(self):
+        uid = self._try_get_sudo_env_var("UID")
+        if not uid:
+            uid = os.getuid()
+
+        return uid
+    def _set_uid_gids(self):
+        for field, setter, default_value_generator in [
+                ("GIDS", os.setgroups, functools.partial(get_user_groups, self._get_host_uid())),
+                ("UID", os.setuid, self._get_host_uid),
         ]:            
             config_value = self.config[field]
             if config_value is None:
-                config_value = self._try_get_sudo_env_var(field)
+                config_value = default_value_generator()
             if config_value is not None:
                 _logger.debug("Calling %s(%s)", setter, config_value)
                 setter(config_value)

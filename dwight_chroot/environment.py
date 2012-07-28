@@ -115,7 +115,7 @@ class Environment(object):
         return self._bind_mount(path, mount_point)
     def _mount_squashfs(self, path, mount_point):
         _logger.debug("Mounting squashfs file %r to %s", path, mount_point)
-        execute_command_assert_success("mount -n -t squashfs -o loop {0} {1}".format(path, mount_point))
+        execute_command_assert_success("mount -n -t squashfs -o ro,loop {0} {1}".format(path, mount_point))
     def _bind_mount(self, path, mount_point):
         _logger.debug("Mounting (binding) %r to %s", path, mount_point)
         execute_command_assert_success("mount -n --bind {0} {1}".format(path, mount_point))

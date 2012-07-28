@@ -49,6 +49,14 @@ class DwightConfiguration(object):
             os.makedirs(os.path.dirname(user_config_file_path))
         with open(user_config_file_path, "w") as user_config_file:
             user_config_file.write(_USER_CONFIG_FILE_TEMPLATE)
+
+    def _update_config(self, config):
+        append_keys = ['INCLUDES']
+        appended_items = dict((append_key, config[append_key] + self._config[append_key])
+                              for append_key in append_keys)
+        
+        self._config.update(config)
+        self._config.update(appended_items)
     def load_from_string(self, s):
         d = copy.deepcopy(self._config)
         try:
@@ -59,7 +67,7 @@ class DwightConfiguration(object):
             if key.startswith("_") or not key[0].isupper():
                 d.pop(key)
         self._check_unknown_parameters(d)
-        self._config.update(d)
+        self._update_config(d)
     def _check_unknown_parameters(self, d):
         unknown = set(d) - self._known_keys
         if unknown:

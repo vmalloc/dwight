@@ -5,12 +5,13 @@ import logging
 import os
 import platform
 import pwd
+import grp
 import subprocess
 from .exceptions import CommandFailed
 
 _logger = logging.getLogger(__name__)
 
-def get_user_shell():
+def get_current_user_shell():
     return pwd.getpwuid(os.getuid()).pw_shell
 
 def execute_command_assert_success(cmd, **kw):
@@ -29,8 +30,8 @@ def execute_command(cmd, unsudo=False, **kw):
     return returned
 
 def _get_unsudo_command(cmd):
-    sudo_uid = _int_if_not_none(os.environ["SUDO_UID"])
-    sudo_gid = _int_if_not_none(os.environ["SUDO_GID"])
+    sudo_uid = get_sudo_uid()
+    sudo_gid = get_sudo_gid()
     if not sudo_uid and not sudo_gid:
         return cmd
     prefix = "sudo "
@@ -39,6 +40,25 @@ def _get_unsudo_command(cmd):
     if sudo_gid is not None:
         prefix += "-g \\#{0} ".format(sudo_gid)
     return prefix + cmd 
+
+def get_sudo_uid():
+    return _int_if_not_none(os.environ.get("SUDO_UID"))
+def get_sudo_gid():
+    return _int_if_not_none(os.environ.get("SUDO_GID"))
+def get_sudo_groups():
+    sudo_uid = get_sudo_uid()
+    if sudo_uid is None:
+        return None
+    return get_groups_by_uid(sudo_uid)
+
+def get_groups_by_uid(uid):
+    try:
+        username = pwd.getpwuid(uid).pw_name
+    except KeyError:
+        _logger.warning("Failed to get pwd information for uid %s", uid, exc_info=True)
+        return []
+    gids = [g.gr_gid for g in grp.getgrall() if username in g.gr_mem]
+    return gids
 
 if platform.system() == "Linux":
     CLONE_NEWNS = 131072
@@ -58,8 +78,8 @@ else:
 def unsudo_context():
     old_uid = os.geteuid()
     old_gid = os.getegid()
-    sudo_uid = _int_if_not_none(os.environ.get("SUDO_UID"))
-    sudo_gid = _int_if_not_none(os.environ.get("SUDO_GID"))
+    sudo_uid = get_sudo_uid()
+    sudo_gid = get_sudo_gid()
     if sudo_gid is not None:
         _logger.debug("Changing gid to %s", sudo_gid)
         os.setegid(sudo_gid)

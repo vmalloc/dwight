@@ -34,7 +34,7 @@ class DwightConfiguration(object):
             ROOT_IMAGE = None,
             INCLUDES = [],
             ENVIRON = {},
-            GID = None,
+            GIDS = None,
             UID = None,
             PWD = os.path.abspath("."),
             NUM_LOOP_DEVICES = None,

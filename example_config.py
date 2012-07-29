@@ -1,6 +1,8 @@
 ROOT_IMAGE = "http://server/ubuntu_precise64.squashfs"
 
 INCLUDES = [
+    Include("/etc/passwd", "/etc/passwd"),
+    Include("/etc/group", "/etc/group"),
     Include("/mounts/fetched_from_local_path", "/local/path"),
     Include("/mounts/fetched_from_git", "git://server/git/git_repository"),
     Include("/mounts/fetched_from_git_branch", "git://server/git/git_repository", branch="branch"),

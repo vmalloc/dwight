@@ -3,6 +3,7 @@ import os
 import string
 import subprocess
 import sys
+import functools
 
 from .cache import Cache
 from .config import DwightConfiguration
@@ -10,9 +11,12 @@ from .exceptions import NotRootException, CannotMountPath
 from .platform_utils import (
     execute_command,
     execute_command_assert_success,
-    get_user_shell,
     unshare_mounts,
     unsudo_context,
+    get_current_user_shell,
+    get_sudo_uid,
+    get_sudo_gid,
+    get_sudo_groups,
     )
 from .python_compat import iteritems
 from .resources import Resource, CacheableResource
@@ -25,12 +29,15 @@ _ROOT_IMAGE_MOUNT_PATH = os.path.join(_DWIGHT_CACHE_DIR, "mounts", "root_image")
 class Environment(object):
     def __init__(self):
         super(Environment, self).__init__()
+        self._sudo_uid = get_sudo_uid()
+        self._sudo_gid = get_sudo_gid()
+        self._sudo_groups = get_sudo_groups()
         with unsudo_context():
             self.cache = Cache(os.path.expanduser("~/.dwight-cache"))
         self.config = DwightConfiguration()
     ############################################################################
     def run_shell(self):
-        return self.run_command_in_chroot(get_user_shell())
+        return self.run_command_in_chroot(get_current_user_shell())
     def run_command_in_chroot(self, cmd):
         if os.getuid() != 0:
             raise NotRootException("Dwight must be run as root")
@@ -66,7 +73,7 @@ class Environment(object):
             path = self._mount_root_image(root_image_path)
             self._mount_includes(path, include_paths)
             os.chroot(path)
-            self._set_uid_gid()
+            self._set_uid_gids()
             self._set_pwd()
             p = execute_command(
                 "env {env} {cmd}".format(
@@ -82,17 +89,24 @@ class Environment(object):
         exit_code >>= 8
         _logger.debug("_wait_for_forked_child: child returned %s", exit_code)
         return exit_code
-    def _set_uid_gid(self):
-        for field, setter in [
-                ("GID", os.setgid),
-                ("UID", os.setuid),
-        ]:            
-            config_value = self.config[field]
-            if config_value is None:
-                config_value = self._try_get_sudo_env_var(field)
-            if config_value is not None:
-                _logger.debug("Calling %s(%s)", setter, config_value)
-                setter(config_value)
+    def _get_host_uid(self):
+        uid = self._try_get_sudo_env_var("UID")
+        if not uid:
+            uid = os.getuid()
+
+        return uid
+    def _set_uid_gids(self):
+        if self.config["GIDS"] is None:
+            if self._sudo_gid is not None:
+                os.setgid(self._sudo_gid)
+                os.setgroups(self._sudo_groups)
+        else:
+            os.setgroups(self.config["GIDS"])
+        if self.config["UID"] is None:
+            if self._sudo_uid is not None:
+                os.setuid(self._sudo_uid)
+        else:
+            os.setuid(self.config["UID"])
     def _set_pwd(self):
         os.chdir(self.config["PWD"])
     def _try_get_sudo_env_var(self, var_name):

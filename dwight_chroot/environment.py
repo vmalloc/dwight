@@ -55,13 +55,13 @@ class Environment(object):
             root_image_resource = Resource.from_string(self.config["ROOT_IMAGE"])
             self._update_used_keys(used_keys, root_image_resource)
             root_image_path = root_image_resource.get_path(self)
-            include_paths = {}
+            include_paths = []
             
             for include in self.config["INCLUDES"]:
                 _logger.debug("Fetching include %s...", include)
                 include_resource = include.to_resource()
                 self._update_used_keys(used_keys, include_resource)
-                include_paths[include] = include_resource.get_path(self)
+                include_paths.append((include, include_resource.get_path(self)))
         self.cache.cleanup(self.config["MAX_CACHE_SIZE"], used_keys)
         return root_image_path, include_paths
     def _update_used_keys(self, keys, resource):
@@ -122,7 +122,7 @@ class Environment(object):
         self._mount_squashfs(root_image_path, _ROOT_IMAGE_MOUNT_PATH)
         return _ROOT_IMAGE_MOUNT_PATH
     def _mount_includes(self, base_path, include_paths):
-        for include, path in iteritems(include_paths):
+        for include, path in include_paths:
             self._mount_path(path, base_path, include.dest)
     def _mount_path(self, path, base_path, mount_point):
         path = os.path.abspath(path)
